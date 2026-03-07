@@ -10,6 +10,7 @@ use App\Http\Controllers\Mobile\AuthController;
 use App\Http\Controllers\Mobile\KasbonController;
 use App\Http\Controllers\Mobile\AbsensiController;
 use App\Http\Controllers\Mobile\SlipGajiController;
+use App\Http\Controllers\Mobile\DashboardController;
 
 use App\Exports\AbsensiExport;
 use App\Exports\SlipGajiExport;
@@ -71,7 +72,7 @@ Route::prefix('m')->group(function () {
 
     // ✅ logout mobile (boleh kamu kasih middleware auth juga, tapi ini tetap jalan)
     Route::post('/logout', [AuthController::class, 'logout'])->name('m.logout');
-
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('m.dashboard');
     // ✅ semua halaman mobile karyawan
     Route::middleware(['auth'])->group(function () {
 
@@ -89,5 +90,6 @@ Route::prefix('m')->group(function () {
         Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('m.slip.index');
         Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('m.slip.show');
         Route::get('/slip-gaji/{id}/pdf', [SlipGajiController::class, 'pdf'])->name('m.slip.pdf');
+        
     });
 });

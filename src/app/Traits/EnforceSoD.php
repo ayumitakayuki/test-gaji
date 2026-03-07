@@ -10,16 +10,16 @@ trait EnforceSoD
     {
         $this->checkSoD($roles);
 
-        // panggil method asli HasRoles (via alias di User.php)
-        return $this->spatieAssignRole(...$roles);
+        // Panggil method asli Spatie HasRoles (via alias di User.php)
+        return $this->_spatieAssignRole(...$roles);
     }
 
     public function syncRoles(...$roles)
     {
         $this->checkSoD($roles);
 
-        // panggil method asli HasRoles (via alias di User.php)
-        return $this->spatieSyncRoles(...$roles);
+        // Panggil method asli Spatie HasRoles (via alias di User.php)
+        return $this->_spatieSyncRoles(...$roles);
     }
 
     private function checkSoD(array $roles)

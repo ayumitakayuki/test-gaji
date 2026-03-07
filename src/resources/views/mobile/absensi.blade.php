@@ -17,6 +17,8 @@
       <div>Lng: <span id="lng">-</span></div>
       <div>Akurasi: <span id="acc">-</span> m</div>
       <div>Update: <span id="locTime">-</span></div>
+      <!-- Tambahkan baris untuk alamat -->
+      <div>Alamat: <span id="address">-</span></div>
     </div>
   </div>
 
@@ -45,6 +47,7 @@
   const lngEl = document.getElementById('lng');
   const accEl = document.getElementById('acc');
   const locTimeEl = document.getElementById('locTime');
+  const addressEl = document.getElementById('address'); // elemen baru untuk alamat
   const msgEl = document.getElementById('msg');
 
   const btnStart = document.getElementById('btnStart');
@@ -67,25 +70,25 @@
   function nowStr() { return new Date().toLocaleString(); }
 
   async function startCamera() {
-  try {
-    camStatus.textContent = 'Requesting...';
+    try {
+      camStatus.textContent = 'Requesting...';
 
-    if (!window.isSecureContext) {
-      throw new Error('Insecure context. Pastikan akses via HTTPS (trycloudflare) dan tidak mixed content.');
+      if (!window.isSecureContext) {
+        throw new Error('Insecure context. Pastikan akses via HTTPS (trycloudflare) dan tidak mixed content.');
+      }
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 360 } },
+        audio: false
+      });
+
+      video.srcObject = stream;
+      camStatus.textContent = 'ON';
+    } catch (e) {
+      camStatus.textContent = 'FAILED';
+      setMsg(`Gagal akses kamera: ${e.name || ''} ${e.message || e}`);
     }
-
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 360 } },
-      audio: false
-    });
-
-    video.srcObject = stream;
-    camStatus.textContent = 'ON';
-  } catch (e) {
-    camStatus.textContent = 'FAILED';
-    setMsg(`Gagal akses kamera: ${e.name || ''} ${e.message || e}`);
   }
-}
 
   function stopCamera() {
     if (stream) {
@@ -114,6 +117,22 @@
         lngEl.textContent = longitude.toFixed(6);
         accEl.textContent = Math.round(accuracy);
         locTimeEl.textContent = nowStr();
+
+        // Reverse geocoding untuk menampilkan alamat (misal via Nominatim)
+        // Hasil geocoding di-set ke <span id="address">
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+          .then(response => response.json())
+          .then(data => {
+            // Pilih field yang paling spesifik: desa/village, kota/city, county/district, dll.
+            const addr = data.address || {};
+            const place = addr.village || addr.suburb || addr.city ||
+                          addr.county || addr.town || addr.district ||
+                          addr.state || addr.region;
+            addressEl.textContent = place || data.display_name || '-';
+          })
+          .catch(() => {
+            addressEl.textContent = 'Tidak ditemukan';
+          });
       },
       (err) => {
         locStatus.textContent = 'FAILED';
@@ -184,7 +203,9 @@
           lat: lastPos.lat,
           lng: lastPos.lng,
           accuracy: lastPos.acc,
-          captured_at: new Date().toISOString()
+          captured_at: new Date().toISOString(),
+          // opsional: kirim alamat jika ingin disimpan di backend
+          address: addressEl.textContent
         })
       });
 
@@ -192,8 +213,9 @@
       if (!res.ok) {
         throw new Error(data.message || 'Gagal submit absensi');
       }
-
-      setMsg('✅ Berhasil absen!\n' + JSON.stringify(data, null, 2));
+      setMsg('✅ Berhasil absen!\n' +
+           JSON.stringify(data, null, 2) +
+           '\nAlamat: ' + addressEl.textContent);
 
       // optional: stop camera/location setelah sukses (hemat baterai)
       // stopCamera(); stopLocation();

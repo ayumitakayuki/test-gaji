@@ -18,13 +18,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    // ✅ Tangani collision method assignRole/syncRoles
     use HasRoles, EnforceSoD {
+        // Alias method Spatie supaya bisa dipanggil dari EnforceSoD
+        HasRoles::assignRole as _spatieAssignRole;
+        HasRoles::syncRoles as _spatieSyncRoles;
+        
+        // Gunakan EnforceSoD sebagai implementasi utama
         EnforceSoD::assignRole insteadof HasRoles;
         EnforceSoD::syncRoles insteadof HasRoles;
-
-        HasRoles::assignRole as spatieAssignRole;
-        HasRoles::syncRoles as spatieSyncRoles;
     }
 
     protected $fillable = [
@@ -44,6 +45,7 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
     }
     public function karyawan()
@@ -71,4 +73,5 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'direktur_operasional',
         ]);
     }
+    
 }

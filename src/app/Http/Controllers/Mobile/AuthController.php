@@ -25,7 +25,7 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // ✅ Pastikan user = App\Models\User (agar hasRole dikenali IDE)
+            // pastikan user memiliki peran karyawan, jika tidak logout
             if (! ($user instanceof \App\Models\User) || ! $user->hasRole('karyawan')) {
                 Auth::logout();
                 return back()->withErrors([
@@ -33,14 +33,18 @@ class AuthController extends Controller
                 ]);
             }
 
-            return redirect()->route('m.kasbon.index');
+            // Catat waktu login agar rekam jejak login tersimpan
+            $user->last_login_at = now();
+            $user->save();
+
+            // Alihkan ke dashboard (bukan ke kasbon)
+            return redirect()->route('m.dashboard');
         }
 
         return back()->withErrors([
             'email' => 'Email / password salah.',
         ]);
     }
-
 
     public function logout(Request $request)
     {
