@@ -63,17 +63,21 @@ class PayrollPermissionSeeder extends Seeder
                 'penggajian.view_own',
             ]);
 
-            // Staff kasbon (tanpa inherit dulu, nanti kita buat inheritance)
+            // Staff kasbon (inherit karyawan permissions + kasbon management)
             $staffKasbon->syncPermissions([
+                // allow staff kasbon to request
+                'kasbon.request',
                 'kasbon.validate',
                 'kasbon.process',
                 'kasbon.view_all',
             ]);
 
-            // Staff admin
+            // Staff admin (inherit karyawan permissions + admin duties)
             $staffAdmin->syncPermissions([
                 'karyawan.manage',
                 'absensi.validate',
+                // allow staff admin to request
+                'kasbon.request',
                 'penggajian.process',
                 'penggajian.report_generate',
                 'penggajian.view_all',
@@ -81,8 +85,9 @@ class PayrollPermissionSeeder extends Seeder
             $staffKasbon->syncWithParentPermissions();
             $staffAdmin->syncWithParentPermissions();
 
-            // Direktur Operasional
+            // Direktur Operasional (can request and approve kasbon)
             $direktur->syncPermissions([
+                'kasbon.request',
                 'kasbon.approve',
                 'penggajian.approve',
                 'penggajian.view_all',
