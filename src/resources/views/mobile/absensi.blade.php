@@ -5,6 +5,18 @@
   <h2>Absensi (Selfie Proof)</h2>
 
   <div style="margin-top:12px;">
+    <label for="type" style="display:block;margin-bottom:6px;font-weight:600;">Pilih Waktu Absensi</label>
+    <select id="type" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;">
+      <option value="masuk_pagi">Masuk Pagi</option>
+      <option value="keluar_siang">Keluar Siang</option>
+      <option value="masuk_siang">Masuk Siang</option>
+      <option value="pulang_kerja">Pulang Kerja</option>
+      <option value="masuk_lembur">Masuk Lembur</option>
+      <option value="pulang_lembur">Pulang Lembur</option>
+    </select>
+  </div>
+
+  <div style="margin-top:12px;">
     <video id="video" playsinline autoplay muted style="width:100%;border-radius:12px;background:#000;"></video>
     <canvas id="canvas" style="display:none;"></canvas>
   </div>
@@ -17,7 +29,6 @@
       <div>Lng: <span id="lng">-</span></div>
       <div>Akurasi: <span id="acc">-</span> m</div>
       <div>Update: <span id="locTime">-</span></div>
-      <!-- Tambahkan baris untuk alamat -->
       <div>Alamat: <span id="address">-</span></div>
     </div>
   </div>
@@ -31,7 +42,9 @@
     style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-weight:700;">
     Absen Sekarang
   </button>
-
+  <div style="margin-top:12px;">
+    <a href="{{ route('m.absensi.history') }}">Lihat Riwayat Absensi</a>
+  </div>
   <div id="msg" style="margin-top:12px;white-space:pre-wrap;"></div>
 </div>
 
@@ -39,6 +52,7 @@
 (() => {
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
+  const typeEl = document.getElementById('type');
 
   const camStatus = document.getElementById('camStatus');
   const locStatus = document.getElementById('locStatus');
@@ -47,38 +61,39 @@
   const lngEl = document.getElementById('lng');
   const accEl = document.getElementById('acc');
   const locTimeEl = document.getElementById('locTime');
-  const addressEl = document.getElementById('address'); // elemen baru untuk alamat
+  const addressEl = document.getElementById('address');
   const msgEl = document.getElementById('msg');
 
   const btnStart = document.getElementById('btnStart');
   const btnStop = document.getElementById('btnStop');
   const btnAbsen = document.getElementById('btnAbsen');
 
-  setMsg(
-    `protocol: ${location.protocol}\n` +
-    `origin: ${location.origin}\n` +
-    `secureContext: ${window.isSecureContext}\n`
-  );
-  setMsg(`protocol=${location.protocol} secure=${window.isSecureContext}`);
-  
   let stream = null;
   let watchId = null;
+  let lastPos = null;
 
-  let lastPos = null; // {lat,lng,acc,ts}
+  function setMsg(t) {
+    msgEl.textContent = t;
+  }
 
-  function setMsg(t) { msgEl.textContent = t; }
-  function nowStr() { return new Date().toLocaleString(); }
+  function nowStr() {
+    return new Date().toLocaleString();
+  }
 
   async function startCamera() {
     try {
       camStatus.textContent = 'Requesting...';
 
       if (!window.isSecureContext) {
-        throw new Error('Insecure context. Pastikan akses via HTTPS (trycloudflare) dan tidak mixed content.');
+        throw new Error('Halaman harus dibuka lewat HTTPS.');
       }
 
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 360 } },
+        video: {
+          facingMode: 'user',
+          width: { ideal: 480 },
+          height: { ideal: 360 }
+        },
         audio: false
       });
 
@@ -86,13 +101,13 @@
       camStatus.textContent = 'ON';
     } catch (e) {
       camStatus.textContent = 'FAILED';
-      setMsg(`Gagal akses kamera: ${e.name || ''} ${e.message || e}`);
+      setMsg('Gagal akses kamera: ' + (e.message || e));
     }
   }
 
   function stopCamera() {
     if (stream) {
-      stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach(track => track.stop());
       stream = null;
       camStatus.textContent = 'OFF';
     }
@@ -106,11 +121,16 @@
 
     locStatus.textContent = 'Requesting...';
 
-    // watchPosition = lokasi terbaca live (update berkala)
     watchId = navigator.geolocation.watchPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
-        lastPos = { lat: latitude, lng: longitude, acc: accuracy, ts: Date.now() };
+
+        lastPos = {
+          lat: latitude,
+          lng: longitude,
+          acc: accuracy,
+          ts: Date.now()
+        };
 
         locStatus.textContent = 'ON';
         latEl.textContent = latitude.toFixed(6);
@@ -118,21 +138,25 @@
         accEl.textContent = Math.round(accuracy);
         locTimeEl.textContent = nowStr();
 
-        // Reverse geocoding untuk menampilkan alamat (misal via Nominatim)
-        // Hasil geocoding di-set ke <span id="address">
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-          .then(response => response.json())
-          .then(data => {
-            // Pilih field yang paling spesifik: desa/village, kota/city, county/district, dll.
-            const addr = data.address || {};
-            const place = addr.village || addr.suburb || addr.city ||
-                          addr.county || addr.town || addr.district ||
-                          addr.state || addr.region;
-            addressEl.textContent = place || data.display_name || '-';
-          })
-          .catch(() => {
-            addressEl.textContent = 'Tidak ditemukan';
-          });
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const data = await response.json();
+
+          const addr = data.address || {};
+          const place =
+            addr.village ||
+            addr.suburb ||
+            addr.city ||
+            addr.county ||
+            addr.town ||
+            addr.district ||
+            addr.state ||
+            data.display_name;
+
+          addressEl.textContent = place || '-';
+        } catch (e) {
+          addressEl.textContent = 'Tidak ditemukan';
+        }
       },
       (err) => {
         locStatus.textContent = 'FAILED';
@@ -155,12 +179,13 @@
   }
 
   function captureJpegBase64(quality = 0.7) {
-    // pastikan video ready
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    if (!vw || !vh) throw new Error('Video belum siap');
 
-    // kecilkan lagi buat hemat size & device
+    if (!vw || !vh) {
+      throw new Error('Video belum siap');
+    }
+
     const targetW = 480;
     const scale = Math.min(1, targetW / vw);
     const w = Math.round(vw * scale);
@@ -168,21 +193,31 @@
 
     canvas.width = w;
     canvas.height = h;
+
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, w, h);
 
-    // hasil base64 jpeg
     return canvas.toDataURL('image/jpeg', quality);
   }
 
   async function submitAttendance() {
     try {
-      if (!stream) throw new Error('Kamera belum ON');
-      if (!lastPos) throw new Error('Lokasi belum terbaca. Pastikan izin lokasi ON.');
+      const selectedType = typeEl.value;
 
-      // optional: cek akurasi minimal (misal <= 100m)
+      if (!selectedType) {
+        throw new Error('Pilih jenis absensi terlebih dahulu.');
+      }
+
+      if (!stream) {
+        throw new Error('Kamera belum ON');
+      }
+
+      if (!lastPos) {
+        throw new Error('Lokasi belum terbaca. Pastikan izin lokasi aktif.');
+      }
+
       if (lastPos.acc > 150) {
-        throw new Error('Akurasi lokasi terlalu besar (' + Math.round(lastPos.acc) + 'm). Coba tunggu sampai lebih akurat.');
+        throw new Error('Akurasi lokasi terlalu besar (' + Math.round(lastPos.acc) + 'm).');
       }
 
       const image_base64 = captureJpegBase64(0.7);
@@ -190,36 +225,38 @@
       btnAbsen.disabled = true;
       setMsg('Mengirim absensi...');
 
-      const res = await fetch("{{ route('m.absensi.check') }}", {
+      const res = await fetch("{{ route('m.absensi.check', [], false) }}", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-TOKEN': "{{ csrf_token() }}",
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
-          // kamu bisa ganti type sesuai kebutuhan
-          type: 'masuk_pagi',
-          image_base64,
+          type: selectedType,
+          image_base64: image_base64,
           lat: lastPos.lat,
           lng: lastPos.lng,
           accuracy: lastPos.acc,
           captured_at: new Date().toISOString(),
-          // opsional: kirim alamat jika ingin disimpan di backend
           address: addressEl.textContent
         })
       });
 
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
         throw new Error(data.message || 'Gagal submit absensi');
       }
-      setMsg('✅ Berhasil absen!\n' +
-           JSON.stringify(data, null, 2) +
-           '\nAlamat: ' + addressEl.textContent);
 
-      // optional: stop camera/location setelah sukses (hemat baterai)
-      // stopCamera(); stopLocation();
-
+      setMsg(
+        '✅ Berhasil absen\n' +
+        'Jenis: ' + selectedType.replaceAll('_', ' ') + '\n' +
+        'Jam: ' + (data.time || '-') + '\n' +
+        'Lat: ' + lastPos.lat + '\n' +
+        'Lng: ' + lastPos.lng + '\n' +
+        'Akurasi: ' + Math.round(lastPos.acc) + ' m'
+      );
     } catch (e) {
       setMsg('❌ ' + e.message);
     } finally {

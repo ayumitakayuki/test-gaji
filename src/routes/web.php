@@ -1,21 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
-use Livewire\Livewire;
-
-use App\Http\Controllers\AbsensiImportController;
-use App\Http\Controllers\Mobile\AuthController;
-use App\Http\Controllers\Mobile\KasbonController;
-use App\Http\Controllers\Mobile\AbsensiController;
-use App\Http\Controllers\Mobile\SlipGajiController;
-use App\Http\Controllers\Mobile\DashboardController;
-
 use App\Exports\AbsensiExport;
 use App\Exports\SlipGajiExport;
 use App\Exports\SlipGajiPdfExport;
-
+use App\Http\Controllers\AbsensiImportController;
+use App\Http\Controllers\Mobile\AbsensiController;
+use App\Http\Controllers\Mobile\AuthController;
+use App\Http\Controllers\Mobile\DashboardController;
+use App\Http\Controllers\Mobile\KasbonController;
+use App\Http\Controllers\Mobile\PasswordController;
+use App\Http\Controllers\Mobile\SlipGajiController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
 
 /* NOTE: Do Not Remove
@@ -85,11 +82,15 @@ Route::prefix('m')->group(function () {
         // ====== ABSENSI (SELFIE PROOF + LOCATION) ======
         Route::get('/absensi', [AbsensiController::class, 'index'])->name('m.absensi.index');
         Route::post('/absensi/check', [AbsensiController::class, 'check'])->name('m.absensi.check');
+        Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('m.absensi.history');
 
         // ====== SLIP GAJI KARYAWAN ======
         Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('m.slip.index');
         Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('m.slip.show');
         Route::get('/slip-gaji/{id}/pdf', [SlipGajiController::class, 'pdf'])->name('m.slip.pdf');
+
+        Route::get('/password', [PasswordController::class, 'edit'])->name('m.password.edit');
+        Route::post('/password', [PasswordController::class, 'update'])->name('m.password.update');
         
     });
 });
