@@ -126,4 +126,20 @@ class AbsensiController extends Controller
             'absensi' => $absensi,
         ]);
     }
+    public function approve(Absensi $absensi)
+    {
+        // Pastikan hanya admin yang bisa melakukan ini
+        $user = Auth::user();
+        if (!$user || $user->role !== 'admin') {
+            abort(403);
+        }
+
+        $absensi->update([
+            'is_approved' => true,
+            'approved_by' => $user->id,
+            'approved_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Absensi telah disetujui.');
+    }
 }

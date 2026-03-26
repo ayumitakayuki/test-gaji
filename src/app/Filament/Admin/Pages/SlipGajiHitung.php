@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use App\Models\AbsensiRekap;
 use Filament\Actions;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Perizinan;
 
 class SlipGajiHitung extends Page
 {
@@ -81,6 +82,7 @@ class SlipGajiHitung extends Page
             // bawa item manual lama saja (opsional)
             $this->additional_items = $this->onlyAdditionalItems($gaji);
 
+            $this->applyPerizinan();
             $this->autoAddDefaultDeductions();
             $this->computeKasbonAuto();
             $this->calculateGrandTotal();
@@ -138,6 +140,7 @@ class SlipGajiHitung extends Page
 
             // $this->applyRekapToGajiData();
             // $this->autoAddDefaultDeductions();
+            $this->applyPerizinan();
             $this->computeKasbonAuto();
             $this->calculateGrandTotal();
 
@@ -149,6 +152,54 @@ class SlipGajiHitung extends Page
 
             session()->flash('error', $e->getMessage());
             return;
+        }
+    }
+
+
+    private function applyPerizinan(): void
+    {
+        // Pastikan karyawan_id, start_date, dan end_date sudah terisi
+        if (!$this->karyawan_id || !$this->start_date || !$this->end_date) {
+            return;
+        }
+
+        // Ambil perizinan yang disetujui dalam rentang periode slip
+        $izinDisetujui = Perizinan::query()
+            ->where('karyawan_id', $this->karyawan_id)
+            ->where('is_approved', true)
+            ->whereDate('tanggal_mulai', '<=', $this->end_date)
+            ->whereDate('tanggal_selesai', '>=', $this->start_date)
+            ->get();
+
+        foreach ($izinDisetujui as $izin) {
+            // Hitung jumlah hari izin
+            $days = Carbon::parse($izin->tanggal_mulai)
+                ->diffInDays(Carbon::parse($izin->tanggal_selesai)) + 1;
+
+            // Cocokkan jenis izin ke tipe item slip gaji
+            $type = match ($izin->jenis) {
+                'sakit'        => 'perizinan_sakit',
+                'berduka'      => 'perizinan_berduka',
+                'tanpa_alasan' => 'perizinan_tanpa_alasan',
+                default        => null,
+            };
+
+            // Lewati jika jenis tak dikenali atau sudah ditambahkan
+            if (!$type) {
+                continue;
+            }
+
+            // Siapkan data item perizinan: jumlah hari di field “masuk”, faktor 1, nominal 0
+            $this->newItem = [
+                'type' => $type,
+                'masuk' => $days,
+                'faktor' => 1,
+                'nominal_lembur' => 0,
+                'total' => 0,
+            ];
+
+            // Panggil addItem() untuk memasukkan ke additional_items
+            $this->addItem();
         }
     }
     public function syncFromRekap(): void

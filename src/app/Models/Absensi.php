@@ -17,10 +17,15 @@ class Absensi extends Model
         'pulang_kerja',
         'masuk_lembur',
         'pulang_lembur',
+        'is_approved','approved_by','approved_at',
     ];    
 
     public function karyawan()
     {
         return $this->belongsTo(Karyawan::class, 'name', 'nama');
+    }
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

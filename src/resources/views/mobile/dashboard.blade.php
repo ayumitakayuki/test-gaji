@@ -10,6 +10,7 @@
     <li><a href="{{ route('m.kasbon.index') }}">Kasbon</a></li>
     <li><a href="{{ route('m.absensi.history') }}">Riwayat Absensi</a></li>
     <li><a href="{{ route('m.password.edit') }}">Ganti Password</a></li>
+    <li><a href="{{ route('m.perizinan.index') }}">Perizinan</a></li>
     {{-- Tambahkan menu lain sesuai kebutuhan --}}
   </ul>
 

@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\AbsensiResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\Action;
+use App\Filament\Admin\Resources\PerizinanResource;
 
 class ListAbsensis extends ListRecords
 {
@@ -21,6 +22,11 @@ class ListAbsensis extends ListRecords
                 ->color('success'),
 
             Actions\CreateAction::make(), // tombol New Absensi tetap tampil
+
+            Action::make('perizinan')
+            ->label('Perizinan')
+            ->icon('heroicon-o-clipboard-document')
+            ->url(PerizinanResource::getUrl()), // atau route('filament.admin.resources.perizinan.index')
         ];
         
     }

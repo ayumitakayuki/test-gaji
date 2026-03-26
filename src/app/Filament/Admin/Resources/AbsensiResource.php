@@ -15,6 +15,10 @@ use Filament\Tables\Filters\Filter;
 use Illuminate\Support\Arr;
 use App\Models\Karyawan;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Actions\Action;
+
 
 class AbsensiResource extends Resource
 {
@@ -80,9 +84,17 @@ class AbsensiResource extends Resource
                 TextColumn::make('pulang_kerja')->label('Pulang Kerja'),
                 TextColumn::make('masuk_lembur')->label('Masuk Lembur'),
                 TextColumn::make('pulang_lembur')->label('Pulang Lembur'),
+
+                IconColumn::make('is_approved')
+                ->label('Approved')
+                ->boolean()
+                ->trueIcon('heroicon-s-check-circle')
+                ->falseIcon('heroicon-s-clock')
+                ->trueColor('success')
+                ->falseColor('warning'),
             ])
-            ->filters([
-    // Periode tanggal (manual)
+        ->filters([
+        // Periode tanggal (manual)
         Filter::make('periode_tanggal')
             ->form([
                 Forms\Components\DatePicker::make('from')->label('Dari'),
@@ -142,10 +154,36 @@ class AbsensiResource extends Resource
                         ->whereIn('jenis_proyek', $values);
                     });
                 }),
+            // SelectFilter::make('is_approved')
+            //     ->label('Status Approval')
+            //     ->options([
+            //         '0' => 'Belum Disetujui',
+            //         '1' => 'Sudah Disetujui',
+            //     ])
+            //     ->query(function ($query, $state) {
+            //         // hanya terapkan filter jika state dipilih
+            //         if (filled($state)) {
+            //             $query->where('is_approved', $state);
+            //         }
+            //     }),
         ])
         ->paginationPageOptions([5, 10, 25, 50, 100, 'all'])
         ->actions([
             Tables\Actions\EditAction::make(),
+
+            Action::make('approve')
+                ->label('Approve')
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn (Absensi $record) => !$record->is_approved)
+                ->action(function (Absensi $record) {
+                    $record->update([
+                        'is_approved'  => true,
+                        'approved_by'  => Auth::id(),
+                        'approved_at'  => now(),
+                    ]);
+                }),
         ])
         ->bulkActions([
             Tables\Actions\BulkActionGroup::make([

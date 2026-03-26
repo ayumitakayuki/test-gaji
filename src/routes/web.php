@@ -10,6 +10,7 @@ use App\Http\Controllers\Mobile\DashboardController;
 use App\Http\Controllers\Mobile\KasbonController;
 use App\Http\Controllers\Mobile\PasswordController;
 use App\Http\Controllers\Mobile\SlipGajiController;
+use App\Http\Controllers\Mobile\PerizinanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
@@ -79,10 +80,14 @@ Route::prefix('m')->group(function () {
         Route::post('/kasbon', [KasbonController::class, 'store'])->name('m.kasbon.store');
         Route::get('/kasbon/{id}', [KasbonController::class, 'show'])->name('m.kasbon.show');
 
-        // ====== ABSENSI (SELFIE PROOF + LOCATION) ======
+        // ====== ABSENSI (SELFIE PROOF + LOCATION + PERIZINAN) ======
         Route::get('/absensi', [AbsensiController::class, 'index'])->name('m.absensi.index');
         Route::post('/absensi/check', [AbsensiController::class, 'check'])->name('m.absensi.check');
         Route::get('/absensi/history', [AbsensiController::class, 'history'])->name('m.absensi.history');
+        Route::get('/perizinan', [PerizinanController::class, 'index'])->name('m.perizinan.index');
+        Route::get('/perizinan/create', [PerizinanController::class, 'create'])->name('m.perizinan.create');
+        Route::post('/perizinan', [PerizinanController::class, 'store'])->name('m.perizinan.store');
+        Route::post('/perizinan/{id}/approve', [PerizinanController::class, 'approve'])->name('m.perizinan.approve');
 
         // ====== SLIP GAJI KARYAWAN ======
         Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('m.slip.index');
@@ -92,5 +97,8 @@ Route::prefix('m')->group(function () {
         Route::get('/password', [PasswordController::class, 'edit'])->name('m.password.edit');
         Route::post('/password', [PasswordController::class, 'update'])->name('m.password.update');
         
+        Route::middleware(['auth','role:admin'])->group(function () {
+            Route::post('/absensi/{absensi}/approve', [AbsensiController::class, 'approve'])->name('absensi.approve');
+        });
     });
 });

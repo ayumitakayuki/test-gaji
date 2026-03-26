@@ -45,6 +45,9 @@
   <div style="margin-top:12px;">
     <a href="{{ route('m.absensi.history') }}">Lihat Riwayat Absensi</a>
   </div>
+  {{-- <div style="margin-top:8px;">
+    <a href="{{ route('m.perizinan.index') }}">Perizinan</a>
+  </div> --}}
   <div id="msg" style="margin-top:12px;white-space:pre-wrap;"></div>
 </div>
 
