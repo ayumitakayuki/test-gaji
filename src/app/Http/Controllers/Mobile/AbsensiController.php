@@ -30,6 +30,7 @@ class AbsensiController extends Controller
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'accuracy' => 'required|numeric',
+            'address' => 'nullable|string',
             'captured_at' => 'nullable|string',
         ]);
 
@@ -85,11 +86,19 @@ class AbsensiController extends Controller
         $filename = 'absensi/' . $karyawan->id_karyawan . '/' . $today . '_' . $request->type . '_' . time() . '.jpg';
         Storage::disk('public')->put($filename, $bin);
 
-        $absen->{$request->type} = now()->format('H:i:s');
-        $absen->lat = $request->lat;
-        $absen->lng = $request->lng;
-        $absen->accuracy = $request->accuracy;
-        $absen->photo_path = $filename;
+        $timeField = $request->type;
+        $latField = 'lat_' . $request->type;
+        $lngField = 'lng_' . $request->type;
+        $accuracyField = 'accuracy_' . $request->type;
+        $addressField = 'address_' . $request->type;
+        $photoField = 'photo_path_' . $request->type;
+
+        $absen->{$timeField} = now()->format('H:i:s');
+        $absen->{$latField} = $request->lat;
+        $absen->{$lngField} = $request->lng;
+        $absen->{$accuracyField} = $request->accuracy;
+        $absen->{$addressField} = $request->address;
+        $absen->{$photoField} = $filename;
         $absen->save();
 
         Log::info('ABSEN TERSIMPAN', [
@@ -105,11 +114,12 @@ class AbsensiController extends Controller
             'ok' => true,
             'id' => $absen->id,
             'type' => $request->type,
-            'time' => $absen->{$request->type},
+            'time' => $absen->{$timeField},
             'photo_url' => Storage::url($filename),
-            'lat' => $absen->lat,
-            'lng' => $absen->lng,
-            'accuracy' => $absen->accuracy,
+            'lat' => $absen->{$latField},
+            'lng' => $absen->{$lngField},
+            'accuracy' => $absen->{$accuracyField},
+            'address' => $absen->{$addressField},
         ]);
     }
     public function history()

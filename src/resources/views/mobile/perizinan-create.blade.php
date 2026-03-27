@@ -1,68 +1,509 @@
 @extends('mobile.layout')
 
 @section('title', 'Ajukan Perizinan')
-@section('header', 'Ajukan Perizinan')
 
 @section('content')
-    <form method="POST" action="{{ route('m.perizinan.store') }}" enctype="multipart/form-data" class="space-y-4">
-        @csrf
+<style>
+  :root {
+    --bg: #dfe3f3;
+    --header-bg: #d9ddef;
+    --sidebar-bg: #f7f7f8;
+    --card-bg: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --primary: #4b7bec;
+    --primary-dark: #2446d8;
+    --border: #e5e7eb;
+    --input-bg: #f8fafc;
+    --input-border: #d8deea;
+    --danger: #b91c1c;
+  }
 
-        <div class="rounded-2xl border border-slate-700 bg-slate-800/60 p-4 space-y-3">
+  * {
+    box-sizing: border-box;
+  }
 
-            <div>
-                <label class="text-sm font-semibold text-slate-200">Jenis Izin</label>
-                <select name="jenis"
-                        class="w-full mt-1 rounded-xl px-4 py-3 bg-slate-900/60 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                        required>
-                    <option value="sakit" {{ old('jenis') == 'sakit' ? 'selected' : '' }}>Sakit (Surat Dokter)</option>
-                    <option value="izin" {{ old('jenis') == 'izin' ? 'selected' : '' }}>Izin</option>
-                    <option value="cuti" {{ old('jenis') == 'cuti' ? 'selected' : '' }}>Cuti</option>
-                    <option value="berduka" {{ old('jenis') == 'berduka' ? 'selected' : '' }}>Berduka</option>
-                    <option value="tanpa_alasan" {{ old('jenis') == 'tanpa_alasan' ? 'selected' : '' }}>Tanpa Alasan</option>
-                </select>
-                @error('jenis') <p class="text-rose-300 text-xs mt-1">{{ $message }}</p> @enderror
+  .izin-form-mobile {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .izin-form-header {
+    background: var(--header-bg);
+    padding: max(16px, env(safe-area-inset-top)) 14px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .izin-form-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .izin-form-brand {
+    font-size: 18px;
+    font-weight: 500;
+    color: #111;
+    white-space: nowrap;
+  }
+
+  .izin-form-back {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: #111;
+  }
+
+  .izin-form-back svg,
+  .izin-form-profile svg,
+  .izin-form-search-icon svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+  }
+
+  .izin-form-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .izin-form-search {
+    height: 34px;
+    background: #fff;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    min-width: 0;
+    width: min(200px, 48vw);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+
+  .izin-form-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 14px;
+    color: #111;
+  }
+
+  .izin-form-search input::placeholder {
+    color: #6b7280;
+  }
+
+  .izin-form-profile {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    flex-shrink: 0;
+  }
+
+  .izin-form-body {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    min-height: calc(100vh - 70px);
+    min-height: calc(100dvh - 70px);
+  }
+
+  .izin-form-sidebar {
+    background: var(--sidebar-bg);
+    padding: 18px 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    border-top-right-radius: 14px;
+  }
+
+  .side-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111827;
+    text-decoration: none;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+
+  .side-icon.active {
+    background: #eef4ff;
+    color: var(--primary);
+  }
+
+  .side-icon:hover {
+    transform: translateY(-1px);
+    background: #f0f4ff;
+  }
+
+  .side-icon svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
+
+  .izin-form-main {
+    padding: 16px 14px 22px;
+  }
+
+  .izin-form-panel {
+    background: var(--card-bg);
+    border-radius: 22px;
+    padding: 18px 14px 20px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  .izin-form-title {
+    margin: 0 0 16px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    text-transform: uppercase;
+  }
+
+  .form-shell {
+    display: grid;
+    gap: 14px;
+  }
+
+  .form-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px 14px;
+  }
+
+  .form-group + .form-group {
+    margin-top: 16px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .form-file {
+    width: 100%;
+    border-radius: 15px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: #111827;
+    padding: 14px 14px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .form-input,
+  .form-select,
+  .form-file {
+    min-height: 52px;
+  }
+
+  .form-textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .form-input::placeholder,
+  .form-textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus,
+  .form-file:focus {
+    border-color: #90a4f7;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(75, 123, 236, 0.12);
+  }
+
+  .error-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--danger);
+    line-height: 1.5;
+  }
+
+  .helper-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .button-group {
+    display: grid;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    width: 100%;
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .submit-btn {
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .submit-btn:hover {
+    background: var(--primary-dark);
+  }
+
+  .cancel-btn {
+    background: #f8fafc;
+    border: 1px solid var(--input-border);
+    color: #374151;
+  }
+
+  .cancel-btn:hover {
+    background: #eef2f7;
+  }
+
+  .submit-btn:active,
+  .cancel-btn:active {
+    transform: scale(0.99);
+  }
+
+  @media (max-width: 390px) {
+    .izin-form-body {
+      grid-template-columns: 64px 1fr;
+    }
+
+    .izin-form-sidebar {
+      padding: 16px 8px 18px;
+      gap: 22px;
+    }
+
+    .side-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .izin-form-main {
+      padding: 14px 10px 18px;
+    }
+
+    .izin-form-panel {
+      padding: 16px 12px 18px;
+    }
+
+    .izin-form-search {
+      width: min(150px, 42vw);
+    }
+  }
+</style>
+
+<div class="izin-form-mobile">
+  <div class="izin-form-header">
+    <div class="izin-form-header-left">
+      <div class="izin-form-brand">RKU</div>
+
+      <button type="button" class="izin-form-back" aria-label="Kembali">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="izin-form-header-right">
+      <div class="izin-form-search">
+        <span class="izin-form-search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-3.5-3.5"></path>
+          </svg>
+        </span>
+        <input type="text" placeholder="Search">
+      </div>
+
+      <div class="izin-form-profile" aria-label="Profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-13Z"/>
+          <circle cx="12" cy="10" r="3"/>
+          <path d="M7.5 17c1.2-2 3-3 4.5-3s3.3 1 4.5 3"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="izin-form-body">
+    <aside class="izin-form-sidebar">
+      <a href="{{ route('m.dashboard') }}" class="side-icon" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 3l8 7v10a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1V10l8-7z"/>
+        </svg>
+      </a>
+
+      <a href="{{ route('m.absensi.index') }}" class="side-icon" aria-label="Absensi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="3.2"></circle>
+          <path d="M5 20c.8-3.6 3.3-5.4 7-5.4S18.2 16.4 19 20"></path>
+        </svg>
+      </a>
+
+      <a href="{{ route('m.absensi.history') }}" class="side-icon" aria-label="Riwayat Absensi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19V5"></path>
+          <path d="M10 19V10"></path>
+          <path d="M16 19V7"></path>
+          <path d="M22 19V12"></path>
+        </svg>
+      </a>
+
+      <a href="{{ route('m.kasbon.index') }}" class="side-icon" aria-label="Kasbon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1v22"></path>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      </a>
+
+      <a href="{{ route('m.perizinan.index') }}" class="side-icon active" aria-label="Perizinan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="4" width="14" height="16" rx="2"></rect>
+          <path d="M9 8h6"></path>
+          <path d="M9 12h6"></path>
+          <path d="M9 16h4"></path>
+        </svg>
+      </a>
+    </aside>
+
+    <main class="izin-form-main">
+      <div class="izin-form-panel">
+        <h2 class="izin-form-title">Ajukan Perizinan</h2>
+
+        <form method="POST" action="{{ route('m.perizinan.store') }}" enctype="multipart/form-data" class="form-shell">
+          @csrf
+
+          <div class="form-card">
+            <div class="form-group">
+              <label class="form-label">Jenis Izin</label>
+              <select
+                name="jenis"
+                class="form-select"
+                required
+              >
+                <option value="sakit" {{ old('jenis') == 'sakit' ? 'selected' : '' }}>Sakit (Surat Dokter)</option>
+                <option value="izin" {{ old('jenis') == 'izin' ? 'selected' : '' }}>Izin</option>
+                <option value="cuti" {{ old('jenis') == 'cuti' ? 'selected' : '' }}>Cuti</option>
+                <option value="berduka" {{ old('jenis') == 'berduka' ? 'selected' : '' }}>Berduka</option>
+                <option value="tanpa_alasan" {{ old('jenis') == 'tanpa_alasan' ? 'selected' : '' }}>Tanpa Alasan</option>
+              </select>
+              @error('jenis')
+                <p class="error-text">{{ $message }}</p>
+              @enderror
             </div>
 
-            <div>
-                <label class="text-sm font-semibold text-slate-200">Tanggal Mulai</label>
-                <input type="date" name="tanggal_mulai" value="{{ old('tanggal_mulai') }}"
-                       class="w-full mt-1 rounded-xl px-4 py-3 bg-slate-900/60 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                       required>
-                @error('tanggal_mulai') <p class="text-rose-300 text-xs mt-1">{{ $message }}</p> @enderror
+            <div class="form-group">
+              <label class="form-label">Tanggal Mulai</label>
+              <input
+                type="date"
+                name="tanggal_mulai"
+                value="{{ old('tanggal_mulai') }}"
+                class="form-input"
+                required
+              >
+              @error('tanggal_mulai')
+                <p class="error-text">{{ $message }}</p>
+              @enderror
             </div>
 
-            <div>
-                <label class="text-sm font-semibold text-slate-200">Tanggal Selesai</label>
-                <input type="date" name="tanggal_selesai" value="{{ old('tanggal_selesai') }}"
-                       class="w-full mt-1 rounded-xl px-4 py-3 bg-slate-900/60 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                       required>
-                @error('tanggal_selesai') <p class="text-rose-300 text-xs mt-1">{{ $message }}</p> @enderror
+            <div class="form-group">
+              <label class="form-label">Tanggal Selesai</label>
+              <input
+                type="date"
+                name="tanggal_selesai"
+                value="{{ old('tanggal_selesai') }}"
+                class="form-input"
+                required
+              >
+              @error('tanggal_selesai')
+                <p class="error-text">{{ $message }}</p>
+              @enderror
             </div>
 
-            <div>
-                <label class="text-sm font-semibold text-slate-200">Keterangan</label>
-                <textarea name="keterangan"
-                          class="w-full mt-1 rounded-xl px-4 py-3 bg-slate-900/60 border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                          rows="4">{{ old('keterangan') }}</textarea>
-                @error('keterangan') <p class="text-rose-300 text-xs mt-1">{{ $message }}</p> @enderror
+            <div class="form-group">
+              <label class="form-label">Keterangan</label>
+              <textarea
+                name="keterangan"
+                class="form-textarea"
+                rows="4"
+              >{{ old('keterangan') }}</textarea>
+              @error('keterangan')
+                <p class="error-text">{{ $message }}</p>
+              @enderror
             </div>
 
-            <div>
-                <label class="text-sm font-semibold text-slate-200">Bukti (opsional)</label>
-                <input type="file" name="bukti_path" accept="image/*,application/pdf"
-                       class="w-full mt-1 rounded-xl px-4 py-3 bg-slate-900/60 border border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40">
-                @error('bukti_path') <p class="text-rose-300 text-xs mt-1">{{ $message }}</p> @enderror
+            <div class="form-group">
+              <label class="form-label">Bukti (opsional)</label>
+              <input
+                type="file"
+                name="bukti_path"
+                accept="image/*,application/pdf"
+                class="form-file"
+              >
+              <p class="helper-text">Format yang didukung: gambar atau PDF.</p>
+              @error('bukti_path')
+                <p class="error-text">{{ $message }}</p>
+              @enderror
             </div>
-        </div>
+          </div>
 
-        <button type="submit"
-                class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-2xl font-semibold">
-            Ajukan Izin
-        </button>
+          <div class="button-group">
+            <button type="submit" class="submit-btn">
+              Ajukan Izin
+            </button>
 
-        <a href="{{ route('m.perizinan.index') }}"
-           class="block w-full text-center py-3 rounded-2xl bg-slate-700/60 border border-slate-600 text-slate-100 font-semibold">
-            Batal
-        </a>
-    </form>
+            <a href="{{ route('m.perizinan.index') }}" class="cancel-btn">
+              Batal
+            </a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
 @endsection
