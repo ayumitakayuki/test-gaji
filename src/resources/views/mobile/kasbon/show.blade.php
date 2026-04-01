@@ -390,15 +390,21 @@
             </div>
 
             @php
-                $status = strtolower($kasbon->status_awal);
+                if ($kasbon->kasbon_loan_id && $kasbon->loan) {
+                    $displayStatus = strtolower($kasbon->loan->status);
+                } else {
+                    $displayStatus = strtolower($kasbon->status_akhir !== 'draft' ? $kasbon->status_akhir : $kasbon->status_awal);
+                }
+
                 $badge = 'background:#374151;color:#f9fafb;border:1px solid #4b5563;';
-                if (str_contains($status, 'waiting')) $badge = 'background:rgba(245,158,11,.14);color:#92400e;border:1px solid rgba(245,158,11,.28);';
-                if (str_contains($status, 'approved')) $badge = 'background:rgba(16,185,129,.14);color:#065f46;border:1px solid rgba(16,185,129,.28);';
-                if (str_contains($status, 'rejected')) $badge = 'background:rgba(239,68,68,.12);color:#991b1b;border:1px solid rgba(239,68,68,.25);';
+                if (str_contains($displayStatus, 'waiting')) $badge = 'background:rgba(245,158,11,.14);color:#92400e;border:1px solid rgba(245,158,11,.28);';
+                if (str_contains($displayStatus, 'approved') || $displayStatus === 'aktif') $badge = 'background:rgba(16,185,129,.14);color:#065f46;border:1px solid rgba(16,185,129,.28);';
+                if ($displayStatus === 'lunas') $badge = 'background:rgba(59,130,246,.14);color:#1d4ed8;border:1px solid rgba(59,130,246,.28);';
+                if (str_contains($displayStatus, 'rejected')) $badge = 'background:rgba(239,68,68,.12);color:#991b1b;border:1px solid rgba(239,68,68,.25);';
             @endphp
 
             <span class="detail-badge" style="{{ $badge }}">
-              {{ $kasbon->status_awal }}
+                {{ $displayStatus }}
             </span>
           </div>
 

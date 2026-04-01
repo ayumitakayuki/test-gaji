@@ -66,11 +66,11 @@ class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForm
     public function form(Form $form): Form
     {
         return $form
+            ->model($this->record ?? KasbonRequest::class)
             ->statePath('data')
             ->schema([
                 Forms\Components\Section::make('Pengajuan Data Kasbon')
                     ->schema([
-
                         Forms\Components\Select::make('karyawan_id')
                             ->label('Karyawan')
                             ->relationship('karyawan', 'nama')
@@ -92,7 +92,7 @@ class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForm
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 $tenor = (int) ($get('tenor') ?: 1);
                                 if ($state && $tenor > 0) {
-                                    $set('cicilan', ceil(((float)$state) / $tenor));
+                                    $set('cicilan', ceil(((float) $state) / $tenor));
                                 }
                             }),
 
@@ -104,7 +104,7 @@ class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForm
                             ->reactive()
                             ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                                 $nominal = (float) ($get('nominal') ?: 0);
-                                $tenor   = max(1, (int) $state);
+                                $tenor = max(1, (int) $state);
                                 if ($nominal > 0) {
                                     $set('cicilan', ceil($nominal / $tenor));
                                 }
@@ -115,7 +115,7 @@ class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForm
                             ->numeric()
                             ->prefix('Rp')
                             ->disabled()
-                            ->dehydrated() // tetap disimpan ke DB
+                            ->dehydrated()
                             ->required(),
 
                         Forms\Components\Textarea::make('alasan_pengajuan')

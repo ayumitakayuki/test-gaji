@@ -32,7 +32,8 @@ class KasbonController extends Controller
 
         $karyawanId = $this->getKaryawanId();
 
-        $requests = KasbonRequest::where('karyawan_id', $karyawanId)
+        $requests = KasbonRequest::with('loan')
+            ->where('karyawan_id', $karyawanId)
             ->latest()
             ->get();
 
@@ -86,8 +87,8 @@ class KasbonController extends Controller
 
         $karyawanId = $this->getKaryawanId();
 
-        // ✅ data-level security → tidak bisa akses kasbon orang lain
-        $kasbon = KasbonRequest::where('id', $id)
+        $kasbon = KasbonRequest::with('loan')
+            ->where('id', $id)
             ->where('karyawan_id', $karyawanId)
             ->firstOrFail();
 

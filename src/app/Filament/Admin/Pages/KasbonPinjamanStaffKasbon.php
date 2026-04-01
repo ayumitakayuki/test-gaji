@@ -56,7 +56,7 @@ class KasbonPinjamanStaffKasbon extends Page implements HasTable
                 ->where('status_akhir', 'waiting_staff_akhir');
         } else {
             // verifikasi awal
-            $query->whereIn('status_awal', ['draft', 'waiting_do_awal']);
+            $query->whereIn('status_awal', ['draft', 'waiting_staff_verif']);
         }
 
         return $query;

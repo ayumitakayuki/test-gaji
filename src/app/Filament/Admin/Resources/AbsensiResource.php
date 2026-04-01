@@ -61,6 +61,83 @@ class AbsensiResource extends Resource
                 Forms\Components\TimePicker::make('pulang_lembur')
                     ->label('Pulang Lembur')
                     ->seconds(true),
+                Forms\Components\Section::make('Detail Mobile - Masuk Pagi')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_masuk_pagi')->label('Lat Masuk Pagi'),
+                        Forms\Components\TextInput::make('lng_masuk_pagi')->label('Lng Masuk Pagi'),
+                        Forms\Components\TextInput::make('accuracy_masuk_pagi')->label('Akurasi Masuk Pagi'),
+                        Forms\Components\Textarea::make('address_masuk_pagi')->label('Alamat Masuk Pagi')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_masuk_pagi')
+                            ->label('Foto Masuk Pagi')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Detail Mobile - Keluar Siang')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_keluar_siang')->label('Lat Keluar Siang'),
+                        Forms\Components\TextInput::make('lng_keluar_siang')->label('Lng Keluar Siang'),
+                        Forms\Components\TextInput::make('accuracy_keluar_siang')->label('Akurasi Keluar Siang'),
+                        Forms\Components\Textarea::make('address_keluar_siang')->label('Alamat Keluar Siang')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_keluar_siang')
+                            ->label('Foto Keluar Siang')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Detail Mobile - Masuk Siang')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_masuk_siang')->label('Lat Masuk Siang'),
+                        Forms\Components\TextInput::make('lng_masuk_siang')->label('Lng Masuk Siang'),
+                        Forms\Components\TextInput::make('accuracy_masuk_siang')->label('Akurasi Masuk Siang'),
+                        Forms\Components\Textarea::make('address_masuk_siang')->label('Alamat Masuk Siang')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_masuk_siang')
+                            ->label('Foto Masuk Siang')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Detail Mobile - Pulang Kerja')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_pulang_kerja')->label('Lat Pulang Kerja'),
+                        Forms\Components\TextInput::make('lng_pulang_kerja')->label('Lng Pulang Kerja'),
+                        Forms\Components\TextInput::make('accuracy_pulang_kerja')->label('Akurasi Pulang Kerja'),
+                        Forms\Components\Textarea::make('address_pulang_kerja')->label('Alamat Pulang Kerja')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_pulang_kerja')
+                            ->label('Foto Pulang Kerja')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Detail Mobile - Masuk Lembur')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_masuk_lembur')->label('Lat Masuk Lembur'),
+                        Forms\Components\TextInput::make('lng_masuk_lembur')->label('Lng Masuk Lembur'),
+                        Forms\Components\TextInput::make('accuracy_masuk_lembur')->label('Akurasi Masuk Lembur'),
+                        Forms\Components\Textarea::make('address_masuk_lembur')->label('Alamat Masuk Lembur')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_masuk_lembur')
+                            ->label('Foto Masuk Lembur')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Detail Mobile - Pulang Lembur')
+                    ->schema([
+                        Forms\Components\TextInput::make('lat_pulang_lembur')->label('Lat Pulang Lembur'),
+                        Forms\Components\TextInput::make('lng_pulang_lembur')->label('Lng Pulang Lembur'),
+                        Forms\Components\TextInput::make('accuracy_pulang_lembur')->label('Akurasi Pulang Lembur'),
+                        Forms\Components\Textarea::make('address_pulang_lembur')->label('Alamat Pulang Lembur')->rows(2),
+                        Forms\Components\FileUpload::make('photo_path_pulang_lembur')
+                            ->label('Foto Pulang Lembur')
+                            ->disk('public')
+                            ->directory('absensi'),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -84,14 +161,40 @@ class AbsensiResource extends Resource
                 TextColumn::make('pulang_kerja')->label('Pulang Kerja'),
                 TextColumn::make('masuk_lembur')->label('Masuk Lembur'),
                 TextColumn::make('pulang_lembur')->label('Pulang Lembur'),
+                
+                TextColumn::make('keterangan_mobile')
+                    ->label('Keterangan Mobile')
+                    ->getStateUsing(function (Absensi $record) {
+                        $items = [];
 
+                        if ($record->masuk_pagi) $items[] = 'Masuk Pagi';
+                        if ($record->keluar_siang) $items[] = 'Keluar Siang';
+                        if ($record->masuk_siang) $items[] = 'Masuk Siang';
+                        if ($record->pulang_kerja) $items[] = 'Pulang Kerja';
+                        if ($record->masuk_lembur) $items[] = 'Masuk Lembur';
+                        if ($record->pulang_lembur) $items[] = 'Pulang Lembur';
+
+                        return empty($items) ? '-' : implode(', ', $items);
+                    })
+                    ->wrap(),
+                // IconColumn::make('has_mobile_photo')
+                //     ->label('Foto Mobile')
+                //     ->getStateUsing(fn (Absensi $record) =>
+                //         filled($record->photo_path_masuk_pagi) ||
+                //         filled($record->photo_path_keluar_siang) ||
+                //         filled($record->photo_path_masuk_siang) ||
+                //         filled($record->photo_path_pulang_kerja) ||
+                //         filled($record->photo_path_masuk_lembur) ||
+                //         filled($record->photo_path_pulang_lembur)
+                //     )
+                //     ->boolean(),
                 IconColumn::make('is_approved')
-                ->label('Approved')
-                ->boolean()
-                ->trueIcon('heroicon-s-check-circle')
-                ->falseIcon('heroicon-s-clock')
-                ->trueColor('success')
-                ->falseColor('warning'),
+                    ->label('Approved')
+                    ->boolean()
+                    ->trueIcon('heroicon-s-check-circle')
+                    ->falseIcon('heroicon-s-clock')
+                    ->trueColor('success')
+                    ->falseColor('warning'),
             ])
         ->filters([
         // Periode tanggal (manual)
