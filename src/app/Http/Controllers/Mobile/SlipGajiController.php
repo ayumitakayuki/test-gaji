@@ -4,45 +4,39 @@ namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
 use App\Models\Gaji;
-use App\Exports\SlipGajiPdfExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class SlipGajiController extends Controller
 {
     public function index()
     {
-        $karyawan = Auth::user()?->karyawan;
-        abort_unless($karyawan, 403);
-        // sesuaikan field yang kamu pakai di tabel gajis:
+        $user = Auth::user();
+        $karyawan = $user->karyawan;
+
+        abort_if(!$karyawan, 404);
+
         $slips = Gaji::query()
             ->where('id_karyawan', $karyawan->id_karyawan)
             ->orderByDesc('periode_akhir')
             ->get();
 
-        return view('mobile.slip.index', compact('slips', 'karyawan'));
+        return view('mobile.slip.index', compact('slips'));
     }
 
-    public function show($id)
+    public function pdf($id)
     {
-        $karyawan = Auth::user()?->karyawan;
-        abort_unless($karyawan, 403);
+        $user = Auth::user();
+        $karyawan = $user->karyawan;
+
+        abort_if(!$karyawan, 404);
+
         $gaji = Gaji::with('details')->findOrFail($id);
 
-        // pastikan slip ini milik dia
         abort_unless($gaji->id_karyawan === $karyawan->id_karyawan, 403);
 
-        return view('mobile.slip.show', compact('gaji'));
-    }
+        $pdf = Pdf::loadView('exports.slip-gaji-pdf', compact('gaji'));
 
-    public function pdf($id, SlipGajiPdfExport $export)
-    {
-        $karyawan = Auth::user()?->karyawan;
-        abort_unless($karyawan, 403);
-
-        $gaji = Gaji::findOrFail($id);
-        abort_unless($gaji->id_karyawan === $karyawan->id_karyawan, 403);
-
-        // reuse exporter yang sudah ada :contentReference[oaicite:9]{index=9}
-        return $export(request(), $id);
+        return $pdf->stream('Slip-Gaji-' . $gaji->nama . '.pdf');
     }
 }

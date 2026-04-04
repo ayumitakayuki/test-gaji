@@ -138,6 +138,10 @@ class AbsensiResource extends Resource
                             ->directory('absensi'),
                     ])
                     ->columns(2),
+                Forms\Components\Textarea::make('declined_reason')
+                    ->label('Alasan Ditolak')
+                    ->disabled()
+                    ->visible(fn ($record) => $record?->is_declined),
             ]);
     }
 
@@ -188,13 +192,25 @@ class AbsensiResource extends Resource
                 //         filled($record->photo_path_pulang_lembur)
                 //     )
                 //     ->boolean(),
-                IconColumn::make('is_approved')
-                    ->label('Approved')
-                    ->boolean()
-                    ->trueIcon('heroicon-s-check-circle')
-                    ->falseIcon('heroicon-s-clock')
-                    ->trueColor('success')
-                    ->falseColor('warning'),
+                TextColumn::make('status_absensi')
+                    ->label('Status')
+                    ->getStateUsing(function (Absensi $record) {
+                        if ($record->is_declined) {
+                            return 'Declined';
+                        }
+
+                        if ($record->is_approved) {
+                            return 'Approved';
+                        }
+
+                        return 'Pending';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Approved' => 'success',
+                        'Declined' => 'danger',
+                        default => 'warning',
+                    }),
             ])
         ->filters([
         // Periode tanggal (manual)
@@ -279,12 +295,37 @@ class AbsensiResource extends Resource
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->visible(fn (Absensi $record) => !$record->is_approved)
+                ->visible(fn (Absensi $record) => !$record->is_approved && !$record->is_declined)
                 ->action(function (Absensi $record) {
                     $record->update([
-                        'is_approved'  => true,
-                        'approved_by'  => Auth::id(),
-                        'approved_at'  => now(),
+                        'is_approved'      => true,
+                        'is_declined'      => false,
+                        'declined_reason'  => null,
+                        'declined_by'      => null,
+                        'declined_at'      => null,
+                        'approved_by'      => Auth::id(),
+                        'approved_at'      => now(),
+                    ]);
+                }),
+
+            Action::make('decline')
+                ->label('Decline')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->form([
+                    Forms\Components\Textarea::make('reason')
+                        ->label('Alasan Penolakan')
+                        ->required(),
+                ])
+                ->visible(fn (Absensi $record) => !$record->is_approved && !$record->is_declined)
+                ->action(function (Absensi $record, array $data) {
+                    $record->update([
+                        'is_approved'      => false,
+                        'is_declined'      => true,
+                        'declined_reason'  => $data['reason'],
+                        'declined_by'      => Auth::id(),
+                        'declined_at'      => now(),
                     ]);
                 }),
         ])

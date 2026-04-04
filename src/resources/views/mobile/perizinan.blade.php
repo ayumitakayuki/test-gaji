@@ -454,6 +454,24 @@
           <path d="M9 16h4"></path>
         </svg>
       </a>
+      <a href="{{ route('m.penilaian-kinerja.index') }}"
+        class="side-icon {{ request()->routeIs('m.penilaian-kinerja.*') ? 'active' : '' }}"
+        aria-label="Penilaian Kinerja">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3 6-6"></path>
+          <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9"></path>
+        </svg>
+      </a>
+      <a href="{{ route('m.slip.index') }}"
+        class="side-icon {{ request()->routeIs('m.slip.*') ? 'active' : '' }}"
+        aria-label="Slip Gaji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+          <path d="M8 7h8"></path>
+          <path d="M8 11h8"></path>
+          <path d="M8 15h5"></path>
+        </svg>
+      </a>
     </aside>
 
     <main class="izin-list-main">

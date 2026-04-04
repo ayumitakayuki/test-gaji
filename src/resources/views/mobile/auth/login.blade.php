@@ -65,6 +65,44 @@
             padding: 20px 22px 24px;
         }
 
+        .password-field {
+            position: relative;
+        }
+
+        .password-input {
+            padding-right: 52px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border: 0;
+            background: transparent;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+
+        .toggle-password:focus {
+            outline: none;
+        }
+
+        .icon-eye {
+            width: 22px;
+            height: 22px;
+            display: block;
+        }
         .brand-wrap {
             display: flex;
             flex-direction: column;
@@ -228,7 +266,7 @@
                     </div>
 
                     <h1 class="title">Sign in</h1>
-                    <p class="subtitle">Masuk untuk mengajukan kasbon</p>
+                    <p class="subtitle">Absensi dan Slip Gaji Karyawan</p>
                 </div>
 
                 @if ($errors->any())
@@ -256,15 +294,37 @@
 
                     <div class="form-group">
                         <label for="password" class="form-label">Password</label>
-                        <input
-                            id="password"
-                            type="password"
-                            name="password"
-                            class="form-input"
-                            placeholder="Masukkan password"
-                            required
-                            autocomplete="current-password"
-                        >
+
+                        <div class="password-field">
+                            <input
+                                id="password"
+                                type="password"
+                                name="password"
+                                class="form-input password-input"
+                                placeholder="Masukkan password"
+                                required
+                                autocomplete="current-password"
+                            >
+
+                            <button
+                                type="button"
+                                class="toggle-password"
+                                aria-label="Tampilkan password"
+                                aria-pressed="false"
+                            >
+                                <svg class="icon-eye eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+
+                                <svg class="icon-eye eye-closed" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="display:none;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.477 10.48A3 3 0 0012 15a3 3 0 002.12-.879" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.88 5.09A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-4.132 5.411" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.228 6.228A9.965 9.965 0 002.458 12c1.274 4.057 5.064 7 9.542 7a9.95 9.95 0 005.772-1.772" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -273,10 +333,30 @@
                 </form>
 
                 <p class="footer-note">
-                    Tips: izin kamera & lokasi akan diminta saat masuk menu Absensi.
+                    Note: izin kamera & lokasi akan diminta saat masuk menu Absensi.
                 </p>
             </div>
         </section>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.getElementById('password');
+            const toggleButton = document.querySelector('.toggle-password');
+            const eyeOpen = document.querySelector('.eye-open');
+            const eyeClosed = document.querySelector('.eye-closed');
+
+            if (passwordInput && toggleButton && eyeOpen && eyeClosed) {
+                toggleButton.addEventListener('click', function () {
+                    const isHidden = passwordInput.type === 'password';
+
+                    passwordInput.type = isHidden ? 'text' : 'password';
+                    eyeOpen.style.display = isHidden ? 'none' : 'block';
+                    eyeClosed.style.display = isHidden ? 'block' : 'none';
+                    toggleButton.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+                    toggleButton.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+                });
+            }
+        });
+    </script>
 </body>
 </html>

@@ -301,6 +301,36 @@
     min-width: 120px;
   }
 
+  .status-declined {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #991b1b;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .decline-btn {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.decline-btn:hover {
+  background: #b91c1c;
+}
+
+.decline-btn:active {
+  transform: scale(0.99);
+}
   .keterangan-cell {
     min-width: 290px;
     white-space: normal !important;
@@ -510,6 +540,24 @@
           <path d="M9 16h4"></path>
         </svg>
       </a>
+      <a href="{{ route('m.penilaian-kinerja.index') }}"
+        class="side-icon {{ request()->routeIs('m.penilaian-kinerja.*') ? 'active' : '' }}"
+        aria-label="Penilaian Kinerja">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3 6-6"></path>
+          <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9"></path>
+        </svg>
+      </a>
+      <a href="{{ route('m.slip.index') }}"
+        class="side-icon {{ request()->routeIs('m.slip.*') ? 'active' : '' }}"
+        aria-label="Slip Gaji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+          <path d="M8 7h8"></path>
+          <path d="M8 11h8"></path>
+          <path d="M8 15h5"></path>
+        </svg>
+      </a>
     </aside>
 
     <main class="absensi-history-main">
@@ -683,11 +731,19 @@
                     </div>
                   </td>
                   <td>
-                    @if($row->is_approved)
+                    @if($row->is_declined)
+                      <span class="status-declined">Declined</span>
+                      <div class="approval-meta">
+                        oleh {{ optional($row->declinedBy)->name ?? '-' }}<br>
+                        {{ $row->declined_at ? \Carbon\Carbon::parse($row->declined_at)->format('d-m-Y H:i') : '-' }}
+                        <br>
+                        Alasan: {{ $row->declined_reason ?? '-' }}
+                      </div>
+                    @elseif($row->is_approved)
                       <span class="status-approved">Approved</span>
                       <div class="approval-meta">
                         oleh {{ optional($row->approvedBy)->name ?? '-' }}<br>
-                        {{ \Carbon\Carbon::parse($row->approved_at)->format('d-m-Y H:i') }}
+                        {{ $row->approved_at ? \Carbon\Carbon::parse($row->approved_at)->format('d-m-Y H:i') : '-' }}
                       </div>
                     @else
                       <span class="status-pending">Pending</span>
@@ -695,11 +751,18 @@
                   </td>
                   @can('admin')
                     <td>
-                      @if(!$row->is_approved)
-                        <form action="{{ route('absensi.approve', $row->id) }}" method="POST" onsubmit="return confirm('Setujui absensi ini?');">
-                          @csrf
-                          <button type="submit" class="approve-btn">Approve</button>
-                        </form>
+                      @if(!$row->is_approved && !$row->is_declined)
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                          <form action="{{ route('absensi.approve', $row->id) }}" method="POST" onsubmit="return confirm('Setujui absensi ini?');">
+                            @csrf
+                            <button type="submit" class="approve-btn">Approve</button>
+                          </form>
+
+                          <form action="{{ route('absensi.decline', $row->id) }}" method="POST" onsubmit="return confirm('Tolak absensi ini?');">
+                            @csrf
+                            <button type="submit" class="decline-btn">Decline</button>
+                          </form>
+                        </div>
                       @else
                         <span class="approve-disabled">-</span>
                       @endif

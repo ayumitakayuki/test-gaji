@@ -1042,6 +1042,6 @@ class SlipGajiHitung extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
-    } 
+        return false;
+    }
 }

@@ -11,10 +11,12 @@ use App\Http\Controllers\Mobile\KasbonController;
 use App\Http\Controllers\Mobile\PasswordController;
 use App\Http\Controllers\Mobile\SlipGajiController;
 use App\Http\Controllers\Mobile\PerizinanController;
+use App\Http\Controllers\Mobile\PenilaianKinerjaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
+
 
 /* NOTE: Do Not Remove
 / Livewire asset handling if using sub folder in domain
@@ -91,8 +93,10 @@ Route::prefix('m')->group(function () {
 
         // ====== SLIP GAJI KARYAWAN ======
         Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('m.slip.index');
-        Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('m.slip.show');
         Route::get('/slip-gaji/{id}/pdf', [SlipGajiController::class, 'pdf'])->name('m.slip.pdf');
+
+        Route::get('/penilaian-kinerja', [PenilaianKinerjaController::class, 'index'])->name('m.penilaian-kinerja.index');
+        Route::get('/penilaian-kinerja/{id}', [PenilaianKinerjaController::class, 'show'])->name('m.penilaian-kinerja.show');
 
         Route::get('/password', [PasswordController::class, 'edit'])->name('m.password.edit');
         Route::post('/password', [PasswordController::class, 'update'])->name('m.password.update');

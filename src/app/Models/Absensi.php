@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Absensi extends Model
 {
@@ -20,6 +22,10 @@ class Absensi extends Model
         'is_approved',
         'approved_by',
         'approved_at',
+        'is_declined',
+        'declined_reason',
+        'declined_by',
+        'declined_at',
 
         'lat_masuk_pagi',
         'lng_masuk_pagi',
@@ -66,5 +72,9 @@ class Absensi extends Model
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+    public function declinedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'declined_by');
     }
 }
