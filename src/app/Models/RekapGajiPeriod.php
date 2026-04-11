@@ -10,12 +10,15 @@ class RekapGajiPeriod extends Model
         'start_date','end_date','selected_pairs',
         'total_payroll','total_non_payroll','total_grand',
         'count_payroll','count_non_payroll','count_grand','created_by',
+        'created_by',
+        'status_do','approved_do_by','approved_do_at',
     ];
 
     protected $casts = [
         'selected_pairs' => 'array',
         'start_date' => 'date',
         'end_date' => 'date',
+        'approved_do_at' => 'datetime',
     ];
 
     public function rows() {
@@ -25,6 +28,9 @@ class RekapGajiPeriod extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'created_by');
     }
-
+    public function approvedDo()
+    {
+        return $this->belongsTo(User::class, 'approved_do_by');
+    }
 }
 
