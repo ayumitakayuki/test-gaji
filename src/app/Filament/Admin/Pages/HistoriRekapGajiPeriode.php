@@ -8,9 +8,11 @@ use Filament\Tables;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Filters\Filter;
+use Filament\Notifications\Notification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
+use Filament\Tables\Columns\BadgeColumn;
 
 class HistoriRekapGajiPeriode extends Page implements HasTable
 {
@@ -68,6 +70,23 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Dibuat')
                 ->dateTime('d M Y H:i'),
+
+
+            BadgeColumn::make('status_do')
+                ->label('Status DO')
+                ->formatStateUsing(fn (string $state): string => match ($state) {
+                    'draft'      => 'Draft',
+                    'waiting_do' => 'Menunggu DO',
+                    'approved_do'=> 'Disetujui DO',
+                    'rejected_do'=> 'Ditolak DO',
+                    default      => $state,
+                })
+                ->colors([
+                    'secondary' => 'draft',
+                    'warning'   => 'waiting_do',
+                    'success'   => 'approved_do',
+                    'danger'    => 'rejected_do',
+                ]),
         ];
     }
 
@@ -94,10 +113,27 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
             Tables\Actions\Action::make('open')
                 ->label('Buka Rekap')
                 ->icon('heroicon-o-arrow-top-right-on-square')
-                ->url(fn (\App\Models\RekapGajiPeriod $record) =>
+                ->url(fn (RekapGajiPeriod $record) =>
                     \App\Filament\Admin\Pages\RekapGajiPeriode::getUrl(['rekap_id' => $record->id])
                 )
                 ->openUrlInNewTab(),
+
+            Tables\Actions\Action::make('kirim_do')
+                ->label('Kirim ke DO')
+                ->icon('heroicon-o-paper-airplane')
+                ->visible(fn (RekapGajiPeriod $record) =>
+                    $record->status_do === 'draft' // hanya tampil untuk rekap yang belum dikirim
+                )
+                ->requiresConfirmation()
+                ->color('warning')
+                ->action(function (RekapGajiPeriod $record) {
+                    $record->update([
+                        'status_do'      => 'waiting_do',
+                        'approved_do_by' => null,
+                        'approved_do_at' => null,
+                    ]);
+                    Notification::make()->title('Rekap dikirim ke DO')->success()->send();
+                }),
         ];
     }
     protected function getTableBulkActions(): array

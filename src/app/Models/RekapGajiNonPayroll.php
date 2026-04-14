@@ -10,6 +10,8 @@ class RekapGajiNonPayroll extends Model
     protected $fillable = [
         'period_start','period_end','period_label','range_type',
         'rows_count','total_pembulatan','total_kasbon','total_sisa_kasbon','total_total_setelah_bon',
+        'created_by',
+        'status_do','approved_do_by','approved_do_at',
     ];
 
     protected $casts = [
@@ -20,6 +22,7 @@ class RekapGajiNonPayroll extends Model
         'total_kasbon'            => 'integer',
         'total_sisa_kasbon'       => 'integer',
         'total_total_setelah_bon' => 'integer',
+        'approved_do_at' => 'datetime',
     ];
 
     public function rows(): HasMany
@@ -36,5 +39,10 @@ class RekapGajiNonPayroll extends Model
         $this->total_sisa_kasbon          = (int) $this->rows->sum('sisa_kasbon');
         $this->total_total_setelah_bon    = (int) $this->rows->sum('total_setelah_bon');
         $this->save();
+    }
+
+    public function approvedDo()
+    {
+        return $this->belongsTo(User::class, 'approved_do_by');
     }
 }

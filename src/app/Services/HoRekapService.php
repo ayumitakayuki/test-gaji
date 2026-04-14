@@ -271,6 +271,9 @@ class HoRekapService
                     'count_non_payroll'=> $countNon,
                     'count_grand'      => $countGrand,
                     'created_by'       => $userId,
+                    'status_do'  => 'draft', // set default
+                    'approved_do_by' => null,
+                    'approved_do_at' => null,
                 ]
             );
 

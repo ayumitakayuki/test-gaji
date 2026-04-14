@@ -37,6 +37,7 @@ class SlipGajiHitung extends Page
     public ?string $editingGajiId = null;
     public ?string $karyawan_id = null;
     public array $kasbon_loans = [];
+    public array $perizinan_days = [];
     public string $tipe_pembayaran = 'payroll';
     public $newItem = [
         'type' => '',
@@ -158,49 +159,88 @@ class SlipGajiHitung extends Page
 
     private function applyPerizinan(): void
     {
-        // Pastikan karyawan_id, start_date, dan end_date sudah terisi
+        $this->perizinan_days = [
+            'perizinan_sakit' => 0,
+            'perizinan_izin' => 0,
+            'perizinan_cuti' => 0,
+            'perizinan_berduka' => 0,
+            'perizinan_tanpa_alasan' => 0,
+        ];
+
         if (!$this->karyawan_id || !$this->start_date || !$this->end_date) {
             return;
         }
 
-        // Ambil perizinan yang disetujui dalam rentang periode slip
+        // perizinan mobile simpan ke PK tabel karyawan, bukan kode UI
+        $emp = \App\Models\Karyawan::where('id_karyawan', $this->karyawan_id)->first()
+            ?? \App\Models\Karyawan::find($this->karyawan_id);
+
+        if (! $emp) {
+            return;
+        }
+
         $izinDisetujui = Perizinan::query()
-            ->where('karyawan_id', $this->karyawan_id)
+            ->where('karyawan_id', $emp->id)
             ->where('is_approved', true)
             ->whereDate('tanggal_mulai', '<=', $this->end_date)
             ->whereDate('tanggal_selesai', '>=', $this->start_date)
             ->get();
 
-        foreach ($izinDisetujui as $izin) {
-            // Hitung jumlah hari izin
-            $days = Carbon::parse($izin->tanggal_mulai)
-                ->diffInDays(Carbon::parse($izin->tanggal_selesai)) + 1;
+        $mulaiSlip   = Carbon::parse($this->start_date)->startOfDay();
+        $selesaiSlip = Carbon::parse($this->end_date)->endOfDay();
 
-            // Cocokkan jenis izin ke tipe item slip gaji
+        foreach ($izinDisetujui as $izin) {
+            $mulaiIzin   = Carbon::parse($izin->tanggal_mulai)->startOfDay();
+            $selesaiIzin = Carbon::parse($izin->tanggal_selesai)->endOfDay();
+
+            $start = $mulaiIzin->greaterThan($mulaiSlip) ? $mulaiIzin : $mulaiSlip;
+            $end   = $selesaiIzin->lessThan($selesaiSlip) ? $selesaiIzin : $selesaiSlip;
+
+            if ($start->gt($end)) {
+                continue;
+            }
+
+            $days = (int) $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) + 1;
+
             $type = match ($izin->jenis) {
                 'sakit'        => 'perizinan_sakit',
+                'izin'         => 'perizinan_izin',
+                'cuti'         => 'perizinan_cuti',
                 'berduka'      => 'perizinan_berduka',
                 'tanpa_alasan' => 'perizinan_tanpa_alasan',
                 default        => null,
             };
 
-            // Lewati jika jenis tak dikenali atau sudah ditambahkan
-            if (!$type) {
+            if (! $type) {
                 continue;
             }
 
-            // Siapkan data item perizinan: jumlah hari di field “masuk”, faktor 1, nominal 0
-            $this->newItem = [
-                'type' => $type,
-                'masuk' => $days,
-                'faktor' => 1,
-                'nominal_lembur' => 0,
-                'total' => 0,
-            ];
-
-            // Panggil addItem() untuk memasukkan ke additional_items
-            $this->addItem();
+            $this->perizinan_days[$type] += (int) $days;
         }
+    }
+    private function removePerizinanAutoItems(): void
+    {
+        $labels = [
+            'Perizinan Sakit (Surat Dokter)',
+            'Perizinan Izin',
+            'Perizinan Cuti',
+            'Perizinan Berduka',
+            'Perizinan Tanpa Alasan',
+            'Potongan Perizinan Tanpa Alasan (8 jam/hari)',
+        ];
+
+        $this->additional_items = collect($this->additional_items)
+            ->reject(function ($it) use ($labels) {
+                $kode = strtolower(trim($it['no'] ?? ''));
+                if (in_array($kode, ['n', 'o', 'p', 'q', 'r'], true)) {
+                    return true;
+                }
+
+                $ket = trim($it['keterangan'] ?? '');
+                return in_array($ket, $labels, true);
+            })
+            ->values()
+            ->all();
     }
     public function syncFromRekap(): void
     {
@@ -268,13 +308,26 @@ class SlipGajiHitung extends Page
             $this->calculateGrandTotal();
         }
     }
-
+    public function updatedNewItemFaktor()
+    {
+        $this->recalculateTotal();
+    }
     public function addItem()
     {
         $this->normalizeNewItemNumbers();
-        foreach (['masuk','faktor','nominal_lembur'] as $f) {
-            if (!is_numeric($this->newItem[$f])) $this->newItem[$f] = 0;
+
+        $this->newItem['masuk'] = (float) ($this->newItem['masuk'] ?? 0);
+        $this->newItem['faktor'] = (float) ($this->newItem['faktor'] ?? 1);
+        $this->newItem['nominal_lembur'] = (float) ($this->newItem['nominal_lembur'] ?? 0);
+
+        if ($this->newItem['faktor'] <= 0) {
+            $this->newItem['faktor'] = 1;
         }
+
+        $this->newItem['total'] =
+            $this->newItem['masuk'] *
+            $this->newItem['nominal_lembur'] *
+            $this->newItem['faktor'];
 
         $this->validate([
             'newItem.type' => 'required|string',
@@ -283,26 +336,19 @@ class SlipGajiHitung extends Page
             'newItem.nominal_lembur' => 'required|numeric|min:0',
         ]);
 
-        $masuk   = (float) $this->newItem['masuk'];
-        $faktor  = (float) $this->newItem['faktor'];
-        $nominal = (float) $this->newItem['nominal_lembur'];
-
-        // ⬅️ perbaiki: total pakai faktor
-        $this->newItem['total'] = $masuk * $nominal * max(1, $faktor);
-
-        // ⬇️ TAMBAH tipe “Perizinan”
         $itemTypes = [
-            'uang_makan_lembur_malam' => ['keterangan' => 'Uang Makan Lembur Malam',      'no' => 'i'],
-            'uang_makan_lembur_jalan' => ['keterangan' => 'Uang Makan Lembur Jalan',      'no' => 'j'],
+            'uang_makan_lembur_malam' => ['keterangan' => 'Uang Makan Lembur Malam', 'no' => 'i'],
+            'uang_makan_lembur_jalan' => ['keterangan' => 'Uang Makan Lembur Jalan', 'no' => 'j'],
 
-            'bpjs_kesehatan' => ['keterangan' => 'Potongan BPJS Kesehatan',               'no' => 'k'],
-            'bpjs_tk'        => ['keterangan' => 'Potongan BPJS TK',                      'no' => 'l'],
-            'bpjs_gabungan'  => ['keterangan' => 'Potongan BPJS Kesehatan + TK',          'no' => 'm'],
+            'bpjs_kesehatan' => ['keterangan' => 'Potongan BPJS Kesehatan', 'no' => 'k'],
+            'bpjs_tk' => ['keterangan' => 'Potongan BPJS TK', 'no' => 'l'],
+            'bpjs_gabungan' => ['keterangan' => 'Potongan BPJS Kesehatan + TK', 'no' => 'm'],
 
-            'perizinan_sakit'         => ['keterangan' => 'Perizinan Sakit (Surat Dokter)',       'no' => 'n'],
-            'perizinan_berduka'       => ['keterangan' => 'Perizinan Berduka',                    'no' => 'o'],
-            'perizinan_tanpa_alasan'  => ['keterangan' => 'Potongan Perizinan Tanpa Alasan (8 jam/hari)', 'no' => 'p'],
-
+            'perizinan_sakit' => ['keterangan' => 'Perizinan Sakit (Surat Dokter)', 'no' => 'n'],
+            'perizinan_izin' => ['keterangan' => 'Perizinan Izin', 'no' => 'o'],
+            'perizinan_cuti' => ['keterangan' => 'Perizinan Cuti', 'no' => 'p'],
+            'perizinan_berduka' => ['keterangan' => 'Perizinan Berduka', 'no' => 'q'],
+            'perizinan_tanpa_alasan' => ['keterangan' => 'Perizinan Tanpa Alasan', 'no' => 'r'],
         ];
 
         $type = $this->newItem['type'] ?? '';
@@ -312,21 +358,29 @@ class SlipGajiHitung extends Page
         }
 
         $keterangan = $itemTypes[$type]['keterangan'];
+
         if (collect($this->additional_items)->contains('keterangan', $keterangan)) {
             session()->flash('error', 'Item ' . $keterangan . ' sudah ditambahkan');
             return;
         }
 
         $this->additional_items[] = [
-            'no'             => $itemTypes[$type]['no'],
-            'keterangan'     => $keterangan,
-            'masuk'          => $this->newItem['masuk'],
-            'faktor'         => $this->newItem['faktor'],
+            'no' => $itemTypes[$type]['no'],
+            'keterangan' => $keterangan,
+            'masuk' => $this->newItem['masuk'],
+            'faktor' => $this->newItem['faktor'],
             'nominal_lembur' => $this->newItem['nominal_lembur'],
-            'total'          => $this->newItem['total'],
+            'total' => $this->newItem['total'],
         ];
 
-        $this->newItem = ['type'=>'','masuk'=>'','faktor'=>'','nominal_lembur'=>'','total'=>''];
+        $this->newItem = [
+            'type' => '',
+            'masuk' => '',
+            'faktor' => '1',
+            'nominal_lembur' => '',
+            'total' => '',
+        ];
+
         $this->calculateGrandTotal();
     }
 
@@ -379,14 +433,21 @@ class SlipGajiHitung extends Page
     }
     public function updatedNewItemType($value)
     {
-        if (in_array($value, ['perizinan_sakit','perizinan_berduka','perizinan_tanpa_alasan'], true)) {
-            // Perizinan: nominal default 0
+        if (in_array($value, [
+            'perizinan_sakit',
+            'perizinan_izin',
+            'perizinan_cuti',
+            'perizinan_berduka',
+            'perizinan_tanpa_alasan',
+        ], true)) {
+            $this->newItem['masuk'] = (int) ($this->perizinan_days[$value] ?? 0);
             $this->newItem['nominal_lembur'] = 0.0;
+
             if (!is_numeric($this->newItem['faktor']) || (float)$this->newItem['faktor'] <= 0) {
-                $this->newItem['faktor'] = 1; // default 1, boleh diubah (mis. 8 utk potong per hari)
+                $this->newItem['faktor'] = 1;
             }
         } else {
-            // Item lain boleh tetap dari mapping karyawan
+            $this->newItem['masuk'] = $this->newItem['masuk'] ?: 0;
             $this->newItem['nominal_lembur'] = (float)($this->gaji_data['nominals'][$value] ?? 0);
         }
 
@@ -405,10 +466,18 @@ class SlipGajiHitung extends Page
     private function recalculateTotal()
     {
         $this->normalizeNewItemNumbers();
-        $masuk = (float) ($this->newItem['masuk'] ?? 0);
-        $nominal = (float) ($this->newItem['nominal_lembur'] ?? 0);
-        $faktor = (float) ($this->newItem['faktor'] ?? 1);
 
+        $masuk   = (float) ($this->newItem['masuk'] ?? 0);
+        $nominal = (float) ($this->newItem['nominal_lembur'] ?? 0);
+        $faktor  = (float) ($this->newItem['faktor'] ?? 1);
+
+        if ($faktor <= 0) {
+            $faktor = 1;
+        }
+
+        $this->newItem['masuk'] = $masuk;
+        $this->newItem['nominal_lembur'] = $nominal;
+        $this->newItem['faktor'] = $faktor;
         $this->newItem['total'] = $masuk * $nominal * $faktor;
     }
 

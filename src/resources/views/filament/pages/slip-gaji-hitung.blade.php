@@ -316,46 +316,63 @@
                 </div>
                 @stack('scripts')
 
-                <!-- Add Item Form -->
-                <div x-data="{
-                    showForm: false,
-                    karyawanNominals: @js($gaji_data['nominals'] ?? []),
+                {{-- additem --}}
+                <div
+                    x-data="{
+                        showForm: false,
+                        karyawanNominals: @js($gaji_data['nominals'] ?? []),
+                        perizinanDays: @js($perizinan_days ?? []),
 
-                    // helper: dukung koma sebagai desimal
-                    toFloat(v){ return parseFloat(String(v ?? '').replace(',', '.')) || 0 },
-                    normalize(v){ return String(v ?? '').replace(',', '.') },
+                        toFloat(v) {
+                            return parseFloat(String(v ?? '').replace(',', '.')) || 0
+                        },
 
-                    calculateTotal() {
-                        const masuk   = this.toFloat(this.formData.masuk);
-                        const faktor  = this.toFloat(this.formData.faktor) || 1;
-                        const nominal = this.toFloat(this.formData.nominal_lembur);
-                        this.formData.total = masuk * faktor * nominal;
+                        normalize(v) {
+                            return String(v ?? '').replace(',', '.')
+                        },
 
-                        // sinkron ke Livewire (pakai titik biar lolos numeric)
-                        $wire.newItem.masuk          = this.normalize(this.formData.masuk);
-                        $wire.newItem.faktor         = this.normalize(this.formData.faktor);
-                        $wire.newItem.nominal_lembur = this.normalize(this.formData.nominal_lembur);
-                        $wire.newItem.total          = this.formData.total;
-                    },
+                        calculateTotal() {
+                            const masuk   = this.toFloat(this.formData.masuk)
+                            const faktor  = this.toFloat(this.formData.faktor) || 1
+                            const nominal = this.toFloat(this.formData.nominal_lembur)
+                            const total   = masuk * faktor * nominal
 
-                    formData: { type:'', masuk:'', faktor:'', nominal_lembur:'', total:'' }
-                }" class="mt-4">
+                            this.formData.total = total
 
-                    <button @click="showForm = !showForm"
-                        <button @click="showForm = !showForm"
-                        class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md 
-                            hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 
-                            transition-all duration-150 ease-in-out text-sm text-gray-900 font-medium">
+                                $wire.set('newItem.masuk', this.normalize(this.formData.masuk))
+                                $wire.set('newItem.faktor', this.normalize(this.formData.faktor))
+                                $wire.set('newItem.nominal_lembur', this.normalize(this.formData.nominal_lembur))
+                            $wire.set('newItem.total', total)
+                        },
+
+                        formData: {
+                            type: '',
+                            masuk: '',
+                            faktor: '1',
+                            nominal_lembur: '',
+                            total: ''
+                        }
+                    }"
+                    class="mt-4"
+                >
+                    <button
+                        type="button"
+                        @click="showForm = !showForm"
+                        class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-150 ease-in-out text-sm text-gray-900 font-medium"
+                    >
                         Tambah Item
                     </button>
-                    <div x-show="showForm"
+
+                    <div
+                        x-show="showForm"
                         x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 transform scale-90"
                         x-transition:enter-end="opacity-100 transform scale-100"
                         x-transition:leave="transition ease-in duration-300"
                         x-transition:leave-start="opacity-100 transform scale-100"
                         x-transition:leave-end="opacity-0 transform scale-90"
-                        class="mt-4 p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                        class="mt-4 p-4 border border-gray-200 rounded-lg bg-white shadow-sm"
+                    >
                         <form wire:submit.prevent="addItem">
                             <div class="grid grid-cols-3 gap-4">
                                 <div class="col-span-3">
@@ -364,23 +381,30 @@
                                         <select
                                             x-model="formData.type"
                                             @change="
-                                                const isPerizinan = ['perizinan_sakit','perizinan_berduka','perizinan_tanpa_alasan'].includes(formData.type);
+                                                const isPerizinan = [
+                                                    'perizinan_sakit',
+                                                    'perizinan_izin',
+                                                    'perizinan_cuti',
+                                                    'perizinan_berduka',
+                                                    'perizinan_tanpa_alasan'
+                                                ].includes(formData.type)
 
-                                                // perizinan: nominal 0, faktor default 1 (boleh diubah user)
-                                                formData.nominal_lembur = isPerizinan ? 0 : (karyawanNominals[formData.type] || 0);
-                                                if (isPerizinan && (!formData.faktor || this.toFloat(formData.faktor) <= 0)) {
-                                                    formData.faktor = '1';
+                                                formData.nominal_lembur = isPerizinan ? 0 : (karyawanNominals[formData.type] || 0)
+
+                                                if (isPerizinan) {
+                                                    formData.masuk = parseInt(perizinanDays[formData.type] || 0, 10)
+                                                    formData.faktor = '1'
                                                 }
 
-                                                $wire.newItem.type           = formData.type;
-                                                $wire.newItem.nominal_lembur = this.normalize(formData.nominal_lembur); // koma -> titik
-                                                $wire.newItem.faktor         = this.normalize(formData.faktor);         // koma -> titik
+                                                $wire.set('newItem.type', formData.type)
+                                                $wire.set('newItem.masuk', this.normalize(formData.masuk))
+                                                $wire.set('newItem.nominal_lembur', this.normalize(formData.nominal_lembur))
+                                                $wire.set('newItem.faktor', this.normalize(formData.faktor))
 
-                                                this.calculateTotal();
-                                                "
-
-                                            wire:model="newItem.type"
-                                            class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                                this.calculateTotal()
+                                            "
+                                            class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                        >
                                             <option value="">Pilih Item...</option>
 
                                             <optgroup label="Uang Makan">
@@ -394,74 +418,73 @@
                                                 <option value="bpjs_gabungan">Potongan BPJS Kesehatan + TK</option>
                                             </optgroup>
 
-                                            <!-- Perizinan -->
                                             <optgroup label="Perizinan">
                                                 <option value="perizinan_sakit">Perizinan Sakit (Surat Dokter)</option>
+                                                <option value="perizinan_izin">Perizinan Izin</option>
+                                                <option value="perizinan_cuti">Perizinan Cuti</option>
                                                 <option value="perizinan_berduka">Perizinan Berduka</option>
-                                                <option value="perizinan_tanpa_alasan">Potongan Perizinan Tanpa Alasan</option>
+                                                <option value="perizinan_tanpa_alasan">Perizinan Tanpa Alasan</option>
                                             </optgroup>
-                                            </select>
-
+                                        </select>
                                     </div>
                                 </div>
+
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Masuk</label>
-                                    <input type="number" 
+                                    <input
+                                        type="number"
                                         x-model="formData.masuk"
-                                        wire:model.defer="newItem.masuk"
-                                        @input="
-                                            $wire.newItem.masuk = formData.masuk;
-                                            calculateTotal();
-                                        "
+                                        wire:model.live="newItem.masuk"
+                                        @input="calculateTotal()"
                                         class="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm"
                                         placeholder="0">
                                 </div>
+
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Faktor</label>
-                                    <input type="number" 
+                                    <input
+                                        type="number"
                                         x-model="formData.faktor"
-                                        wire:model.defer="newItem.faktor"
-                                        @input="
-                                            $wire.newItem.faktor = formData.faktor;
-                                            calculateTotal();
-                                        "
+                                        wire:model.live="newItem.faktor"
+                                        @input="calculateTotal()"
                                         step="0.1"
                                         class="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm"
                                         placeholder="1">
-
                                 </div>
+
                                 <div>
                                     <label class="text-sm font-medium text-gray-700">Nominal</label>
-                                    <input type="number" 
+                                    <input
+                                        type="number"
                                         x-model="formData.nominal_lembur"
-                                        wire:model.defer="newItem.nominal_lembur"
-                                        @input="
-                                            $wire.newItem.nominal_lembur = formData.nominal_lembur;
-                                            calculateTotal();
-                                        "
+                                        wire:model.live="newItem.nominal_lembur"
+                                        @input="calculateTotal()"
                                         class="mt-1 w-full rounded-md border-gray-300 shadow-sm text-sm"
                                         placeholder="0">
-
                                 </div>
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Total</label>
-                                    <input type="number" 
-                                        x-model="formData.total"
-                                        wire:model.defer="newItem.total"
+                                    <input
+                                        type="number"
+                                        value="{{ $newItem['total'] ?? 0 }}"
                                         class="w-full rounded-md border-gray-300 shadow-sm bg-gray-50"
                                         readonly>
-
                                 </div>
-
                             </div>
+
                             <div class="mt-4 flex justify-end space-x-2">
-                                <button type="button" 
-                                        @click="showForm = false"
-                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                <button
+                                    type="button"
+                                    @click="showForm = false"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md"
+                                >
                                     Batal
                                 </button>
-                                <button type="submit" 
-                                        class="px-3 py-1 text-sm border border-gray-300 rounded-md">
+                                <button
+                                    type="submit"
+                                    class="px-3 py-1 text-sm border border-gray-300 rounded-md"
+                                >
                                     Tambah
                                 </button>
                             </div>

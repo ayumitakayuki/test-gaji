@@ -4,6 +4,7 @@ use App\Exports\AbsensiExport;
 use App\Exports\SlipGajiExport;
 use App\Exports\SlipGajiPdfExport;
 use App\Http\Controllers\AbsensiImportController;
+use App\Http\Controllers\RekapGajiPeriodePdfController;
 use App\Http\Controllers\Mobile\AbsensiController;
 use App\Http\Controllers\Mobile\AuthController;
 use App\Http\Controllers\Mobile\DashboardController;
@@ -54,6 +55,8 @@ Route::get('/admin/slip-gaji/export/{id}', function ($id) {
 Route::get('/slip-gaji/{id}/export-pdf', SlipGajiPdfExport::class)
     ->name('slip-gaji.export.pdf');
 
+Route::get('/rekap-gaji/periode/export-pdf', [RekapGajiPeriodePdfController::class, 'export'])
+    ->name('rekap-gaji-periode-export');
 /**
  * ✅ FIX: Laravel middleware auth default mencari route name "login"
  * Karena kamu pakai login mobile "m.login", kita buat alias "login" => redirect ke m.login
