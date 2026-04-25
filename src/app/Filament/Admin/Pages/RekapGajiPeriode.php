@@ -25,7 +25,7 @@ class RekapGajiPeriode extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $title = 'Rekap Gaji Periode';
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
     protected static string $view = 'filament.pages.rekap-gaji-periode';
     protected static ?string $navigationLabel = 'Rekap Gaji Periode';
     protected static ?string $navigationGroup = 'Laporan Gaji';

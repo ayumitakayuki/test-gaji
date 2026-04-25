@@ -18,7 +18,7 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-folder-plus';
     protected static string $view = 'filament.pages.histori-rekap-gaji-periode';
     protected static ?string $title = 'Histori Rekap Gaji';
         protected static ?string $navigationGroup = 'Laporan Gaji';

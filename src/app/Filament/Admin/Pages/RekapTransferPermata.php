@@ -28,7 +28,7 @@ class RekapTransferPermata extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $title = 'Rekap Transfer Permata';
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-pound';
     protected static string $view = 'filament.pages.rekap-transfer-permata';
     protected static ?string $navigationLabel = 'Rekap Transfer Permata';
     protected static ?string $navigationGroup = 'Laporan Gaji';

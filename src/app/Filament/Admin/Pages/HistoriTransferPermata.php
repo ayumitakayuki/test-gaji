@@ -16,7 +16,7 @@ class HistoriTransferPermata extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-banknotes';
+    protected static ?string $navigationIcon  = 'heroicon-o-folder-open';
     protected static ?string $title           = 'Histori Transfer Permata';
     protected static ?string $navigationLabel = 'Histori Transfer Permata';
     protected static ?string $navigationGroup = 'Laporan Gaji';

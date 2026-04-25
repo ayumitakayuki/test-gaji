@@ -53,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Admin\Widgets\LatestAccessLogs::class,
                 \App\Filament\Admin\Widgets\StaffAdminDashboardStats::class,
                 \App\Filament\Admin\Widgets\KasbonDashboardStats::class,
+                \App\Filament\Admin\Widgets\PersonalActivityWidget::class, // widget log pribadi
             ])
             ->navigationGroups([
                 NavigationGroup::make()

@@ -14,6 +14,7 @@ use Spatie\Activitylog\Models\Activity;
 class KasbonDashboardStats extends BaseWidget
 {
     protected static ?int $sort = 1;
+    protected int|string|array $columnSpan = 'full';
 
     public static function canView(): bool
     {

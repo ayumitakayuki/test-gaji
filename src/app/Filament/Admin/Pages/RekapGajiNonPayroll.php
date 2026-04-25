@@ -22,7 +22,7 @@ class RekapGajiNonPayroll extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $title = 'Rekap Gaji Non Payroll';
-    protected static ?string $navigationIcon = 'heroicon-o-wallet';
+    protected static ?string $navigationIcon = 'heroicon-o-document-currency-euro';
     protected static string $view = 'filament.pages.rekap-gaji-nonpayroll';
     protected static ?string $navigationLabel = 'Rekap Gaji Non Payroll';
     protected static ?string $navigationGroup = 'Laporan Gaji';

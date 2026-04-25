@@ -18,7 +18,7 @@ class HistoriRekapGajiNonPayroll extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-wallet';
+    protected static ?string $navigationIcon  = 'heroicon-o-folder-minus';
     protected static ?string $title           = 'Histori Rekap Gaji Non Payroll';
     protected static ?string $navigationLabel = 'Histori Rekap Non Payroll';
     protected static ?string $navigationGroup = 'Laporan Gaji';
