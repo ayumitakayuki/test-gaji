@@ -51,6 +51,8 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 \Awcodes\Overlook\Widgets\OverlookWidget::class,
                 \App\Filament\Admin\Widgets\LatestAccessLogs::class,
+                \App\Filament\Admin\Widgets\StaffAdminDashboardStats::class,
+                \App\Filament\Admin\Widgets\KasbonDashboardStats::class,
             ])
             ->navigationGroups([
                 NavigationGroup::make()
