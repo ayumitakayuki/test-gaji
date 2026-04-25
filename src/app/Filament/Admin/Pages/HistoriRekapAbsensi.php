@@ -28,6 +28,9 @@ class HistoriRekapAbsensi extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string $view = 'filament.pages.histori-rekap-absensi';
     protected static ?string $title = 'Histori Rekap Absensi';
+    protected static ?string $navigationLabel = 'Histori Rekap Absensi';
+    protected static ?string $navigationGroup = 'Absensi';
+    protected static ?int    $navigationSort  = 3;
 
     public static function getNavigationGroup(): ?string
     {
@@ -333,6 +336,6 @@ class HistoriRekapAbsensi extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 }

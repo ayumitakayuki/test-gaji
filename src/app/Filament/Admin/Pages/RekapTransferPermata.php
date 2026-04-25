@@ -30,6 +30,9 @@ class RekapTransferPermata extends Page implements HasForms
     protected static ?string $title = 'Rekap Transfer Permata';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static string $view = 'filament.pages.rekap-transfer-permata';
+    protected static ?string $navigationLabel = 'Rekap Transfer Permata';
+    protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 2;
     public ?string $search = null;
     public ?string $start_date = null;
     public ?string $end_date   = null;
@@ -37,7 +40,7 @@ class RekapTransferPermata extends Page implements HasForms
     public array $filters = [];
     public static function getNavigationGroup(): ?string
     {
-        return 'Penggajian';
+        return 'Laporan Gaji';
     }
     public function mount(): void
     {
@@ -574,7 +577,6 @@ class RekapTransferPermata extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
-
 }

@@ -19,9 +19,9 @@ class KasbonPinjamanStaffKasbon extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-banknotes';
-    protected static ?string $navigationLabel = 'Kasbon Pinjaman';
-    protected static ?string $title           = 'Kasbon Pinjaman';
+    protected static ?string $navigationIcon  = 'heroicon-o-user-circle';
+    protected static ?string $navigationLabel = 'Kasbon User';
+    protected static ?string $title           = 'Kasbon User';
     protected static ?string $navigationGroup = 'Kasbon';
     protected static ?int $navigationSort     = 1;
 

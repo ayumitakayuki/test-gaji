@@ -21,7 +21,8 @@ class HistoriRekapGajiNonPayroll extends Page implements HasTable
     protected static ?string $navigationIcon  = 'heroicon-o-wallet';
     protected static ?string $title           = 'Histori Rekap Gaji Non Payroll';
     protected static ?string $navigationLabel = 'Histori Rekap Non Payroll';
-    protected static ?string $navigationGroup = 'Penggajian';
+    protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 6;
     protected static string $view             = 'filament.pages.histori-rekap-gaji-non-payroll';
 
     public static function getSlug(): string
@@ -160,7 +161,7 @@ class HistoriRekapGajiNonPayroll extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 
 }

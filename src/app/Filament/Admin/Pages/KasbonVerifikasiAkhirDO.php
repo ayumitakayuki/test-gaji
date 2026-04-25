@@ -22,7 +22,7 @@ class KasbonVerifikasiAkhirDO extends Page implements HasTable
     protected static ?string $navigationIcon  = 'heroicon-o-shield-check';
     protected static ?string $navigationLabel = 'Verifikasi Akhir Kasbon';
     protected static ?string $title           = 'Kasbon Verification (Akhir)';
-    protected static ?string $navigationGroup = 'Direktur Operasional';
+    protected static ?string $navigationGroup = 'Approval';
     protected static ?int $navigationSort     = 2;
 
     protected static string $view = 'filament.pages.kasbon-verifikasi-akhir-do';

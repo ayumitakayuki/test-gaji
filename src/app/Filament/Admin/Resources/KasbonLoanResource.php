@@ -19,6 +19,9 @@ class KasbonLoanResource extends Resource
     protected static ?string $model = KasbonLoan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Kasbon';
+    protected static ?string $navigationLabel = 'Kasbon Loan';
+    protected static ?int    $navigationSort  = 2;
 
     public static function form(Form $form): Form
     {
@@ -142,7 +145,7 @@ class KasbonLoanResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canViewAny();
     }
     public static function canCreate(): bool
     {

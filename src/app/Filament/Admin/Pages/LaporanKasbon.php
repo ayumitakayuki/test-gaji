@@ -10,17 +10,18 @@ use App\Exports\LaporanKasbonExport;
 
 class LaporanKasbon extends Page
 {
-    protected static ?string $navigationIcon  = 'heroicon-o-banknotes';
+    protected static ?string $navigationIcon  = 'heroicon-o-document';
     protected static ?string $navigationLabel = 'Laporan Kasbon';
     protected static ?string $title           = 'Laporan Kasbon';
-    protected static ?string $navigationGroup = 'Penggajian';
+    protected static ?string $navigationGroup = 'Kasbon';
     protected static string $view             = 'filament.pages.laporan-kasbon';
+    protected static ?int    $navigationSort  = 4;
 
     public string $bulan; 
     public string $q = '';
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return \Illuminate\Support\Facades\Gate::allows('kasbon.process');
     }
 
     /** @var array<int, array> */

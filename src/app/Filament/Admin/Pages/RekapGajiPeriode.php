@@ -27,10 +27,13 @@ class RekapGajiPeriode extends Page implements HasForms
     protected static ?string $title = 'Rekap Gaji Periode';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string $view = 'filament.pages.rekap-gaji-periode';
+    protected static ?string $navigationLabel = 'Rekap Gaji Periode';
+    protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 1;
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Penggajian';
+        return 'Laporan Gaji';
     }
     public array $filters = [
         'start_date'     => null,
@@ -356,6 +359,6 @@ class RekapGajiPeriode extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 }

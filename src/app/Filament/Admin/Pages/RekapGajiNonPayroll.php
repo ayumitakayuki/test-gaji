@@ -24,6 +24,9 @@ class RekapGajiNonPayroll extends Page implements HasForms
     protected static ?string $title = 'Rekap Gaji Non Payroll';
     protected static ?string $navigationIcon = 'heroicon-o-wallet';
     protected static string $view = 'filament.pages.rekap-gaji-nonpayroll';
+    protected static ?string $navigationLabel = 'Rekap Gaji Non Payroll';
+    protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 3;
 
     public ?string $start_date = null;
     public ?string $end_date   = null;
@@ -34,7 +37,7 @@ class RekapGajiNonPayroll extends Page implements HasForms
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Penggajian';
+        return 'Laporan Gaji';
     }
     public function mount(): void
     {
@@ -414,7 +417,7 @@ class RekapGajiNonPayroll extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 
 }

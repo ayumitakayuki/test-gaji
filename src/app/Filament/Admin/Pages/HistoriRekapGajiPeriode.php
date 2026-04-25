@@ -21,10 +21,12 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static string $view = 'filament.pages.histori-rekap-gaji-periode';
     protected static ?string $title = 'Histori Rekap Gaji';
+        protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 4;
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Penggajian';
+        return 'Laporan Gaji';
     }
 
     protected function getTableQuery(): Builder
@@ -154,7 +156,7 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 
 }

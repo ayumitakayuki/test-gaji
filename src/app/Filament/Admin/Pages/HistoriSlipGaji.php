@@ -25,6 +25,9 @@ class HistoriSlipGaji extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.pages.histori-slip-gaji';
     protected static ?string $title = 'Histori Slip Gaji';
+    protected static ?string $navigationLabel = 'Histori Slip Gaji';
+    protected static ?string $navigationGroup = 'Penggajian';
+    protected static ?int    $navigationSort  = 2;
 
     public static function getNavigationGroup(): ?string
     {
@@ -182,7 +185,7 @@ class HistoriSlipGaji extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 
 }

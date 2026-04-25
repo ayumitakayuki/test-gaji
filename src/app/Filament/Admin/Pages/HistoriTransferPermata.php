@@ -19,7 +19,8 @@ class HistoriTransferPermata extends Page implements HasTable
     protected static ?string $navigationIcon  = 'heroicon-o-banknotes';
     protected static ?string $title           = 'Histori Transfer Permata';
     protected static ?string $navigationLabel = 'Histori Transfer Permata';
-    protected static ?string $navigationGroup = 'Penggajian';
+    protected static ?string $navigationGroup = 'Laporan Gaji';
+    protected static ?int    $navigationSort  = 5;
     protected static string $view             = 'filament.pages.histori-transfer-permata';
 
     public static function getSlug(): string
@@ -168,7 +169,7 @@ class HistoriTransferPermata extends Page implements HasTable
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canAccess();
     }
 
 }

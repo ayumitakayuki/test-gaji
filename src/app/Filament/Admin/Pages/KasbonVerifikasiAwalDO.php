@@ -21,7 +21,7 @@ class KasbonVerifikasiAwalDO extends Page implements HasTable
     protected static ?string $navigationIcon  = 'heroicon-o-check-circle';
     protected static ?string $navigationLabel = 'Verifikasi Awal Kasbon';
     protected static ?string $title           = 'Kasbon Verification (Awal)';
-    protected static ?string $navigationGroup = 'Direktur Operasional';
+    protected static ?string $navigationGroup = 'Approval';
     protected static ?int $navigationSort     = 1;
 
     protected static string $view = 'filament.pages.kasbon-verifikasi-awal-do';

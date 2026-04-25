@@ -23,7 +23,10 @@ use Filament\Tables\Actions\Action;
 class AbsensiResource extends Resource
 {
     protected static ?string $model = Absensi::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?string $navigationLabel = 'List Absensi';
+    protected static ?string $navigationGroup = 'Absensi';
+    protected static ?int    $navigationSort  = 2;
     
 
     public static function form(Form $form): Form

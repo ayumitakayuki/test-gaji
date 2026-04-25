@@ -20,6 +20,9 @@ class RekapAbsensi extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar-square';
     protected static ?string $title = 'Rekapitulasi Absensi';
+    protected static ?string $navigationLabel = 'Rekap Absensi';
+    protected static ?string $navigationGroup = 'Absensi';
+    protected static ?int    $navigationSort  = 1;
     protected static string $view = 'filament.pages.rekap-absensi';
 
     public array $rekap = [];

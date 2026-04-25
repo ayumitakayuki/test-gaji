@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Gate;
 class KasbonPaymentResource extends Resource
 {
     protected static ?string $model = KasbonPayment::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Kasbon';
+    protected static ?string $navigationLabel = 'Kasbon Payment';
+    protected static ?int    $navigationSort  = 3;
+    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
     public static function form(Form $form): Form
     {
@@ -163,7 +165,7 @@ class KasbonPaymentResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return static::canViewAny();
     }
     public static function canCreate(): bool
     {

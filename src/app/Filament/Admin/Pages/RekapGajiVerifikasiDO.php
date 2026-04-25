@@ -19,7 +19,7 @@ class RekapGajiVerifikasiDO extends Page implements HasTable
 
     protected static ?string $navigationIcon  = 'heroicon-o-check-circle';
     protected static ?string $title           = 'Verifikasi Rekap Gaji';
-    protected static ?string $navigationGroup = 'Direktur Operasional';
+    protected static ?string $navigationGroup = 'Approval';
     protected static string $view             = 'filament.pages.rekap-gaji-verifikasi-d-o';
 
     public static function canAccess(): bool
