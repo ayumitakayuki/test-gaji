@@ -169,27 +169,26 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('users.manage')
-        || Gate::allows('role.manage')
-        || Gate::allows('activity.view');
+        return Gate::allows('user.manage');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
+
     public static function canCreate(): bool
     {
-        return Gate::allows('permission.nama');
+        return Gate::allows('user.manage');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('permission.nama');
+        return Gate::allows('user.manage');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('permission.nama');
+        return Gate::allows('user.manage');
     }
 }
