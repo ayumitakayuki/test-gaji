@@ -12,7 +12,6 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         $defaultPassword = Hash::make('password');
-        $karyawanPassword  = Hash::make('123456');
 
         // ✅ 1) SUPER ADMIN (wajib)
         $admin = User::firstOrCreate(
@@ -61,7 +60,7 @@ class AdminSeeder extends Seeder
             ['email' => 'karyawan@demo.com'],
             [
                 'name'     => 'Karyawan',
-                'password' => $karyawanPassword, 
+                'password' => $defaultPassword, 
             ]
         );
         $karyawan->syncRoles(['karyawan']);

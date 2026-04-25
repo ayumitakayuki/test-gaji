@@ -34,7 +34,7 @@ Livewire::setScriptRoute(function ($handle) {
 */
 
 Route::get('/', function () {
-    return view('m.login');
+    return redirect()->route('m.login');
 });
 
 Route::get('/absensi/download-template', [AbsensiImportController::class, 'downloadTemplate'])

@@ -3,7 +3,10 @@
 namespace App\Imports;
 
 use App\Models\Karyawan;
+use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -55,7 +58,7 @@ class KaryawanImport implements ToCollection, WithHeadingRow
         $headers = array_keys($rows->first()->toArray());
         $missing = array_diff($this->requiredHeaders, $headers);
 
-        if (!empty($missing)) {
+        if (! empty($missing)) {
             throw ValidationException::withMessages([
                 'file' => 'Format tidak sesuai. Kolom wajib: ' . implode(', ', $this->requiredHeaders),
             ]);
@@ -66,8 +69,10 @@ class KaryawanImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            Karyawan::updateOrInsert(
-                ['id_karyawan' => $row['id_karyawan']],
+            $karyawan = Karyawan::updateOrCreate(
+                [
+                    'id_karyawan' => $row['id_karyawan'],
+                ],
                 [
                     'nama' => $row['nama'],
                     'status' => $row['status'] ?? null,
@@ -88,6 +93,38 @@ class KaryawanImport implements ToCollection, WithHeadingRow
                     'faktor_hari_besar' => $row['faktor_hari_besar'] ?? null,
                 ]
             );
+
+            $localPart = Str::of($karyawan->nama)
+                ->lower()
+                ->replace(' ', '.')
+                ->replaceMatches('/[^a-z0-9.]/', '')
+                ->trim('.');
+
+            $email = $localPart . '@rku.absensi';
+
+            $user = User::firstOrCreate(
+                [
+                    'email' => $email,
+                ],
+                [
+                    'name' => $karyawan->nama,
+                    'password' => Hash::make('123456'),
+                    'karyawan_id' => $karyawan->id,
+                ]
+            );
+
+            $user->name = $karyawan->nama;
+            $user->karyawan_id = $karyawan->id;
+            $user->save();
+
+            if (! $user->hasRole('karyawan')) {
+                $user->assignRole('karyawan');
+            }
+
+            if (array_key_exists('user_id', $karyawan->getAttributes())) {
+                $karyawan->user_id = $user->id;
+                $karyawan->save();
+            }
         }
     }
 }
