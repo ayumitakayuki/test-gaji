@@ -34,7 +34,7 @@ Livewire::setScriptRoute(function ($handle) {
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('m.login');
 });
 
 Route::get('/absensi/download-template', [AbsensiImportController::class, 'downloadTemplate'])
@@ -75,10 +75,9 @@ Route::prefix('m')->group(function () {
 
     // ✅ logout mobile (boleh kamu kasih middleware auth juga, tapi ini tetap jalan)
     Route::post('/logout', [AuthController::class, 'logout'])->name('m.logout');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('m.dashboard');
     // ✅ semua halaman mobile karyawan
     Route::middleware(['auth'])->group(function () {
-
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('m.dashboard');
         // ====== KASBON ======
         Route::get('/kasbon', [KasbonController::class, 'index'])->name('m.kasbon.index');
         Route::get('/kasbon/create', [KasbonController::class, 'create'])->name('m.kasbon.create');

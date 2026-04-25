@@ -35,6 +35,11 @@ class PayrollPermissionSeeder extends Seeder
                 'penggajian.report_generate',
                 'penggajian.view_all',
                 'penggajian.approve',
+
+                'dashboard.view',
+                'activity.view', 
+                'user.manage',
+                'role.manage', 
             ];
 
             foreach ($permissions as $perm) {
@@ -91,6 +96,10 @@ class PayrollPermissionSeeder extends Seeder
                 'kasbon.approve',
                 'penggajian.approve',
                 'penggajian.view_all',
+                'dashboard.view',
+                'activity.view',
+                'user.manage',
+                'role.manage',
             ]);
         });
     }
