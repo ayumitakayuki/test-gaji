@@ -24,7 +24,8 @@ class RekapGajiVerifikasiDO extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.approve');
+        return Gate::allows('penggajian.approve')
+        || Gate::allows('kasbon.approve');
     }
 
     protected function getTableQuery(): Builder

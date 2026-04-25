@@ -93,7 +93,8 @@ class SlipGaji extends Page implements HasTable
     {
         return Gate::allows('penggajian.process')
             || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+            || Gate::allows('karyawan.manage')
+            || Gate::allows('penggajian.report');
     }
 
     public static function shouldRegisterNavigation(): bool

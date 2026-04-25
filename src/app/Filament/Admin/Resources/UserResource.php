@@ -169,7 +169,9 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('users.manage');
+        return Gate::allows('users.manage')
+        || Gate::allows('role.manage')
+        || Gate::allows('activity.view');
     }
 
     public static function shouldRegisterNavigation(): bool

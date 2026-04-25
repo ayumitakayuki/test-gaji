@@ -23,23 +23,16 @@ class PayrollPermissionSeeder extends Seeder
                 'penggajian.view_own',
 
                 // Staff Kasbon
-                'kasbon.validate',
                 'kasbon.process',
                 'kasbon.view_all',
-                'kasbon.approve',
 
                 // Staff Admin
-                'karyawan.manage',
-                'absensi.validate',
-                'penggajian.process',
-                'penggajian.report_generate',
-                'penggajian.view_all',
-                'penggajian.approve',
-
                 'dashboard.view',
-                'activity.view', 
+                'activity.view',
                 'user.manage',
-                'role.manage', 
+                'role.manage',
+                'kasbon.approve',
+                'penggajian.approve',
             ];
 
             foreach ($permissions as $perm) {
@@ -71,35 +64,29 @@ class PayrollPermissionSeeder extends Seeder
             // Staff kasbon (inherit karyawan permissions + kasbon management)
             $staffKasbon->syncPermissions([
                 // allow staff kasbon to request
-                'kasbon.request',
-                'kasbon.validate',
                 'kasbon.process',
                 'kasbon.view_all',
             ]);
 
             // Staff admin (inherit karyawan permissions + admin duties)
             $staffAdmin->syncPermissions([
-                'karyawan.manage',
-                'absensi.validate',
-                // allow staff admin to request
-                'kasbon.request',
                 'penggajian.process',
-                'penggajian.report_generate',
-                'penggajian.view_all',
+                'penggajian.report',
+                'absensi.validate',
+                'karyawan.manage',
             ]);
             $staffKasbon->syncWithParentPermissions();
             $staffAdmin->syncWithParentPermissions();
 
             // Direktur Operasional (can request and approve kasbon)
             $direktur->syncPermissions([
-                'kasbon.request',
-                'kasbon.approve',
-                'penggajian.approve',
-                'penggajian.view_all',
                 'dashboard.view',
                 'activity.view',
                 'user.manage',
                 'role.manage',
+                'kasbon.approve',
+                'penggajian.approve',
+                'kinerja.manage',
             ]);
         });
     }

@@ -28,7 +28,8 @@ class PenilaianKinerjaResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'Penilaian Kinerja';
     protected static ?string $pluralLabel = 'Penilaian Kinerja';
-    protected static ?string $navigationGroup = 'Penggajian';
+    protected static ?string $navigationGroup = 'Manajemen Data';
+    protected static ?int    $navigationSort  = 2;
 
     public static function form(Form $form): Form
     {
@@ -217,21 +218,26 @@ class PenilaianKinerjaResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('penggajian.process') || Gate::allows('karyawan.manage');
+        return Gate::allows('kinerja.manage');
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
     }
 
     public static function canCreate(): bool
     {
-        return Gate::allows('penggajian.process') || Gate::allows('karyawan.manage');
+        return Gate::allows('kinerja.manage');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('penggajian.process') || Gate::allows('karyawan.manage');
+        return Gate::allows('kinerja.manage');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('penggajian.process') || Gate::allows('karyawan.manage');
+        return Gate::allows('kinerja.manage');
     }
 }

@@ -9,6 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\Gate;
 
 class LatestAccessLogs extends BaseWidget
 {
@@ -85,5 +86,10 @@ class LatestAccessLogs extends BaseWidget
                     ->sortable(),
             ])
             ->paginated(false);
+    }
+
+    public static function canView(): bool
+    {
+        return Gate::allows('activity.view');
     }
 }
