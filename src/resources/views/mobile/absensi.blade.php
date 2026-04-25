@@ -513,11 +513,11 @@
           Absen Sekarang
         </button>
 
-        <div class="link-box">
+        {{-- <div class="link-box">
           <a href="{{ route('m.absensi.history') }}">Lihat Riwayat Absensi</a>
-        </div>
+        </div> --}}
 
-        <div id="msg"></div>
+         <!-- elemen msg dihapus; notifikasi menggunakan alert() -->
       </div>
     </main>
   </div>
@@ -537,7 +537,7 @@
   const accEl = document.getElementById('acc');
   const locTimeEl = document.getElementById('locTime');
   const addressEl = document.getElementById('address');
-  const msgEl = document.getElementById('msg');
+  // const msgEl = document.getElementById('msg');
 
   const btnStart = document.getElementById('btnStart');
   const btnStop = document.getElementById('btnStop');
@@ -547,8 +547,8 @@
   let watchId = null;
   let lastPos = null;
 
-  function setMsg(t) {
-    msgEl.textContent = t;
+  function notify(message) {
+    alert(message);
   }
 
   function nowStr() {
@@ -691,14 +691,14 @@
         throw new Error('Lokasi belum terbaca. Pastikan izin lokasi aktif.');
       }
 
-      if (lastPos.acc > 150) {
+      if (lastPos.acc > 300) {
         throw new Error('Akurasi lokasi terlalu besar (' + Math.round(lastPos.acc) + 'm).');
       }
 
       const image_base64 = captureJpegBase64(0.7);
 
       btnAbsen.disabled = true;
-      setMsg('Mengirim absensi...');
+      notify('Mengirim absensi...');
 
       const res = await fetch("{{ route('m.absensi.check', [], false) }}", {
         method: 'POST',
@@ -724,23 +724,23 @@
         throw new Error(data.message || 'Gagal submit absensi');
       }
 
-      setMsg(
-        '✅ Berhasil absen\n' +
-        'Jenis: ' + selectedType.replaceAll('_', ' ') + '\n' +
-        'Jam: ' + (data.time || '-') + '\n' +
-        'Lat: ' + lastPos.lat + '\n' +
-        'Lng: ' + lastPos.lng + '\n' +
-        'Akurasi: ' + Math.round(lastPos.acc) + ' m'
-      );
+      notify(
+         '✅ Berhasil absen\n' +
+         'Jenis: ' + selectedType.replaceAll('_', ' ') + '\n' +
+         'Jam: ' + (data.time || '-') + '\n' +
+         'Lat: ' + lastPos.lat + '\n' +
+         'Lng: ' + lastPos.lng + '\n' +
+         'Akurasi: ' + Math.round(lastPos.acc) + ' m'
+       );
     } catch (e) {
-      setMsg('❌ ' + e.message);
+      notify('❌ ' + e.message);
     } finally {
       btnAbsen.disabled = false;
     }
   }
 
   btnStart.addEventListener('click', async () => {
-    setMsg('');
+    // setMsg('');
     await startCamera();
     startLocation();
   });

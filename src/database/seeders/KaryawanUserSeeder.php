@@ -25,7 +25,7 @@ class KaryawanUserSeeder extends Seeder
             'email' => 'karyawan@test.com',
         ], [
             'name' => 'Karyawan Demo',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123456'),
             'karyawan_id' => $karyawan->id,
         ]);
 

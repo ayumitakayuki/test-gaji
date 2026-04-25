@@ -37,7 +37,7 @@ class AbsensiController extends Controller
         $karyawan = Auth::user()?->karyawan;
         abort_unless($karyawan, 403);
 
-        if ($request->accuracy > 150) {
+        if ($request->accuracy > 300) {
             return response()->json([
                 'message' => 'Akurasi lokasi terlalu besar, coba tunggu GPS lebih akurat.'
             ], 422);
