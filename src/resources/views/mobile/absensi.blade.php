@@ -241,10 +241,10 @@
 
   #video {
     width: 100%;
-    display: block;
-    background: #000;
-    aspect-ratio: 4 / 3;
+    height: 260px;
     object-fit: cover;
+    background: #000;
+    border-radius: 12px;
   }
 
   .status-grid {
@@ -279,6 +279,27 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     margin-bottom: 12px;
+  }
+
+  .btn-flip {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .btn-flip:active {
+    transform: scale(0.95);
   }
 
   .btn {
@@ -486,9 +507,15 @@
         </div>
 
         <div class="camera-card">
-          <div class="video-box">
+          <div class="video-box" style="position: relative;">
             <video id="video" playsinline autoplay muted></video>
+
+            <!-- tombol flip kamera -->
+            <button id="btnFlipCamera" type="button" class="btn-flip" title="Ganti Kamera">
+              🔄
+            </button>
           </div>
+
           <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
@@ -542,10 +569,12 @@
   const btnStart = document.getElementById('btnStart');
   const btnStop = document.getElementById('btnStop');
   const btnAbsen = document.getElementById('btnAbsen');
+  const btnFlipCamera = document.getElementById('btnFlipCamera');
 
   let stream = null;
   let watchId = null;
   let lastPos = null;
+  let currentFacing = 'user';
 
   function notify(message) {
     alert(message);
@@ -553,6 +582,12 @@
 
   function nowStr() {
     return new Date().toLocaleString();
+  }
+
+  async function flipCamera() {
+    currentFacing = currentFacing === 'user' ? 'environment' : 'user';
+    stopCamera();
+    await startCamera();
   }
 
   async function startCamera() {
@@ -565,7 +600,7 @@
 
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user',
+          facingMode: { ideal: currentFacing },
           width: { ideal: 480 },
           height: { ideal: 360 }
         },
@@ -576,7 +611,7 @@
       camStatus.textContent = 'ON';
     } catch (e) {
       camStatus.textContent = 'FAILED';
-      setMsg('Gagal akses kamera: ' + (e.message || e));
+      notify('Gagal akses kamera: ' + (e.message || e));
     }
   }
 
@@ -635,7 +670,7 @@
       },
       (err) => {
         locStatus.textContent = 'FAILED';
-        setMsg('Gagal akses lokasi: ' + err.message);
+        notify('Gagal akses lokasi: ' + err.message);
       },
       {
         enableHighAccuracy: true,
@@ -739,8 +774,9 @@
     }
   }
 
+  btnFlipCamera.addEventListener('click', flipCamera);
+
   btnStart.addEventListener('click', async () => {
-    // setMsg('');
     await startCamera();
     startLocation();
   });
