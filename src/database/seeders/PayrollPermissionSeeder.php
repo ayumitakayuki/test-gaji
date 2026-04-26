@@ -53,10 +53,10 @@ class PayrollPermissionSeeder extends Seeder
             // reset cache lagi setelah permission dibuat
             app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-            $karyawan = Role::where('name', 'karyawan')->firstOrFail();
-            $staffKasbon = Role::where('name', 'staff_kasbon')->firstOrFail();
-            $staffAdmin = Role::where('name', 'staff_administrasi')->firstOrFail();
-            $direktur = Role::where('name', 'direktur_operasional')->firstOrFail();
+            $karyawan = Role::firstOrCreate(['name' => 'karyawan', 'guard_name' => 'web']);
+            $staffKasbon = Role::firstOrCreate(['name' => 'staff_kasbon', 'guard_name' => 'web']);
+            $staffAdmin = Role::firstOrCreate(['name' => 'staff_administrasi', 'guard_name' => 'web']);
+            $direktur = Role::firstOrCreate(['name' => 'direktur_operasional', 'guard_name' => 'web']);
 
             $karyawan->syncPermissions([
                 'absensi.create',
