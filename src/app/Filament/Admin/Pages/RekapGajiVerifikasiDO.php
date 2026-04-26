@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class RekapGajiVerifikasiDO extends Page implements HasTable
 {
@@ -24,8 +25,10 @@ class RekapGajiVerifikasiDO extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.approve')
-        || Gate::allows('kasbon.approve');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_RekapGajiVerifikasiDO');
     }
 
     protected function getTableQuery(): Builder

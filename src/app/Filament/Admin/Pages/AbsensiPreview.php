@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Session;
 use Filament\Notifications\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class AbsensiPreview extends Page
 {
@@ -85,11 +87,14 @@ class AbsensiPreview extends Page
         redirect()->route('filament.admin.pages.absensi-preview');
     }
 
+
+
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_AbsensiPreview');
     }
 
     public static function shouldRegisterNavigation(): bool

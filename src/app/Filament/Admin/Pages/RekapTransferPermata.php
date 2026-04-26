@@ -22,6 +22,8 @@ use App\Models\KasbonPayment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class RekapTransferPermata extends Page implements HasForms
 {
@@ -570,9 +572,10 @@ class RekapTransferPermata extends Page implements HasForms
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_RekapTransferPermata');
     }
 
     public static function shouldRegisterNavigation(): bool

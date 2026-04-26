@@ -11,6 +11,8 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Filters\SelectFilter;
 use App\Models\AbsensiRekap;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class SlipGaji extends Page implements HasTable
 {
@@ -91,10 +93,13 @@ class SlipGaji extends Page implements HasTable
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage')
-            || Gate::allows('penggajian.report');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('page_SlipGaji')
+            || $user->can('page_HistoriSlipGaji')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool

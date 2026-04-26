@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class KasbonVerifikasiAwalDO extends Page implements HasTable
 {
@@ -28,7 +29,10 @@ class KasbonVerifikasiAwalDO extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('kasbon.approve');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_KasbonVerifikasiAwalDO');
     }
 
     public static function shouldRegisterNavigation(): bool

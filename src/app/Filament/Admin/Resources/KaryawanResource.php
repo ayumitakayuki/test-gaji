@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class KaryawanResource extends Resource
 {
@@ -257,21 +258,39 @@ class KaryawanResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        return Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('view_any_karyawan');
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
+
     public static function canCreate(): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_karyawan');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_karyawan');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_karyawan');
     }
 
 }

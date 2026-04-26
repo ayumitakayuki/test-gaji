@@ -13,6 +13,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Filament\Tables\Columns\BadgeColumn;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class HistoriRekapGajiPeriode extends Page implements HasTable
 {
@@ -149,9 +151,10 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_HistoriRekapGajiPeriode');
     }
 
     public static function shouldRegisterNavigation(): bool

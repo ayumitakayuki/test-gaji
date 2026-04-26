@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class KasbonPinjamanStaffKasbon extends Page implements HasTable
 {
@@ -32,7 +33,13 @@ class KasbonPinjamanStaffKasbon extends Page implements HasTable
     // ✅ HRBAC UI
     public static function canAccess(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool

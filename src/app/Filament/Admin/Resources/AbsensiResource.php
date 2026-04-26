@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Actions\Action;
-
+use App\Models\User;
 
 class AbsensiResource extends Resource
 {
@@ -355,26 +355,39 @@ class AbsensiResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('absensi.validate');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('view_any_absensi');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
+
     public static function canCreate(): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_absensi');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_absensi');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_absensi');
     }
 
 }

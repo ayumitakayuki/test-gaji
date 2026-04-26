@@ -7,6 +7,8 @@ use App\Models\KasbonLoan;
 use App\Models\KasbonPayment;
 use Carbon\Carbon;
 use App\Exports\LaporanKasbonExport;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class LaporanKasbon extends Page
 {
@@ -21,7 +23,13 @@ class LaporanKasbon extends Page
     public string $q = '';
     public static function shouldRegisterNavigation(): bool
     {
-        return \Illuminate\Support\Facades\Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     /** @var array<int, array> */

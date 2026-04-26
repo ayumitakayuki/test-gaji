@@ -14,6 +14,8 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class KasbonPaymentResource extends Resource
 {
@@ -160,26 +162,39 @@ class KasbonPaymentResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user && $user->can('view_any_kasbon::payment');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
+
     public static function canCreate(): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_kasbon::payment');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_kasbon::payment');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('permission.nama');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_kasbon::payment');
     }
 
 }

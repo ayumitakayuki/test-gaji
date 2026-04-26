@@ -17,6 +17,8 @@ use App\Models\AbsensiRekap;
 use Filament\Actions;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Perizinan;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class SlipGajiHitung extends Page
 {
@@ -1104,9 +1106,10 @@ class SlipGajiHitung extends Page
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_SlipGajiHitung');
     }
 
     public static function shouldRegisterNavigation(): bool

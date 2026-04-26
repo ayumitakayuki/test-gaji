@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Filament\Notifications\Notification;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class RekapAbsensi extends Page
 {
@@ -317,11 +319,11 @@ class RekapAbsensi extends Page
     
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-        || Gate::allows('absensi.validate')
-        || Gate::allows('karyawan.manage');
-    }
+        /** @var User|null $user */
+        $user = Auth::user();
 
+        return $user && $user->can('page_RekapAbsensi');
+    }
     public static function shouldRegisterNavigation(): bool
     {
         return static::canAccess();

@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class KasbonLoanResource extends Resource
 {
@@ -140,26 +142,39 @@ class KasbonLoanResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('view_any_kasbon::loan');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         return static::canViewAny();
     }
+
     public static function canCreate(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_kasbon::loan');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_kasbon::loan');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_kasbon::loan');
     }
 
 

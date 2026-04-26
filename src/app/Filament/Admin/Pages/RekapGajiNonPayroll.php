@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Gaji;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class RekapGajiNonPayroll extends Page implements HasForms
 {
@@ -410,9 +412,10 @@ class RekapGajiNonPayroll extends Page implements HasForms
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_RekapGajiNonPayroll');
     }
 
     public static function shouldRegisterNavigation(): bool

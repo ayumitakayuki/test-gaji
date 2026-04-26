@@ -13,6 +13,8 @@ use Filament\Forms;
 use App\Models\RekapGajiNonPayroll as RekapNonPayrollHeader;
 use App\Filament\Admin\Pages\RekapGajiNonPayroll as RekapNonPayrollPage;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class HistoriRekapGajiNonPayroll extends Page implements HasTable
 {
@@ -154,9 +156,10 @@ class HistoriRekapGajiNonPayroll extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_HistoriRekapGajiNonPayroll');
     }
 
     public static function shouldRegisterNavigation(): bool

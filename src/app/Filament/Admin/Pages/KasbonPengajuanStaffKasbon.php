@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForms
 {
@@ -30,7 +31,13 @@ class KasbonPengajuanStaffKasbon extends Page implements Forms\Contracts\HasForm
     // ✅ HRBAC UI
     public static function canAccess(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool

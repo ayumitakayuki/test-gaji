@@ -20,6 +20,8 @@ use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Actions;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class HistoriRekapAbsensi extends Page implements HasTable
 {
@@ -329,9 +331,10 @@ class HistoriRekapAbsensi extends Page implements HasTable
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_HistoriRekapAbsensi');
     }
 
     public static function shouldRegisterNavigation(): bool

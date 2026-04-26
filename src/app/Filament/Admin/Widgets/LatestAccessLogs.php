@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class LatestAccessLogs extends BaseWidget
 {
@@ -90,6 +91,9 @@ class LatestAccessLogs extends BaseWidget
 
     public static function canView(): bool
     {
-        return Gate::allows('activity.view');
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user && $user->can('view_any_activity');
     }
 }

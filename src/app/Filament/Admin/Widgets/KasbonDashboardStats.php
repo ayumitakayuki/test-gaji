@@ -10,6 +10,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Models\Activity;
+use App\Models\User;
 
 class KasbonDashboardStats extends BaseWidget
 {
@@ -18,7 +19,13 @@ class KasbonDashboardStats extends BaseWidget
 
     public static function canView(): bool
     {
-        return Gate::allows('kasbon.process');
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user && (
+            $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     protected function getStats(): array

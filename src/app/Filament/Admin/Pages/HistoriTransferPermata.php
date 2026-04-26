@@ -11,6 +11,8 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class HistoriTransferPermata extends Page implements HasTable
 {
@@ -162,9 +164,10 @@ class HistoriTransferPermata extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_HistoriTransferPermata');
     }
 
     public static function shouldRegisterNavigation(): bool

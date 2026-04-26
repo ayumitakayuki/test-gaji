@@ -4,7 +4,9 @@ namespace App\Filament\Admin\Pages;
 
 use Filament\Pages\Page;
 use App\Models\Gaji;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 class DetailSlipGaji extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-eye';
@@ -20,11 +22,12 @@ class DetailSlipGaji extends Page
 
     public static function canAccess(): bool
     {
-        return (request()->has('id')) && (
-            Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage')
-        );
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return request()->has('id')
+            && $user
+            && $user->can('page_DetailSlipGaji');
     }
 
     public static function shouldRegisterNavigation(): bool

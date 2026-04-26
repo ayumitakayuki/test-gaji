@@ -8,6 +8,7 @@ use Filament\Pages\Page;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class KasbonDetailDO extends Page
 {
@@ -23,7 +24,13 @@ class KasbonDetailDO extends Page
 
     public static function canAccess(): bool
     {
-        return Gate::allows('kasbon.approve');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool

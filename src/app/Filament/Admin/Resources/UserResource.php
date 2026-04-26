@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -169,7 +170,10 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('user.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('view_any_user');
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -179,16 +183,25 @@ class UserResource extends Resource
 
     public static function canCreate(): bool
     {
-        return Gate::allows('user.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_user');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('user.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_user');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('user.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_user');
     }
 }

@@ -7,6 +7,7 @@ use Filament\Tables;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class PersonalActivityWidget extends TableWidget
 {
@@ -17,10 +18,16 @@ class PersonalActivityWidget extends TableWidget
     /** Tentukan siapa yang boleh melihat widget ini */
     public static function canView(): bool
     {
-        return Gate::allows('penggajian.process') // untuk staf admin
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage')
-            || Gate::allows('kasbon.process');    // untuk staf kasbon
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user && (
+            $user->can('view_any_absensi')
+            || $user->can('view_any_karyawan')
+            || $user->can('page_SlipGaji')
+            || $user->can('view_any_kasbon::loan')
+            || $user->can('view_any_kasbon::payment')
+        );
     }
 
     /** Query data aktivitas: hanya log milik user login */

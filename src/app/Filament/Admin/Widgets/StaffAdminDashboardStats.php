@@ -10,6 +10,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Activitylog\Models\Activity;
+use App\Models\User;
 
 class StaffAdminDashboardStats extends BaseWidget
 {
@@ -18,9 +19,14 @@ class StaffAdminDashboardStats extends BaseWidget
 
     public static function canView(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var \App\Models\User|null $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user && (
+            $user->can('view_any_absensi')
+            || $user->can('view_any_karyawan')
+            || $user->can('page_SlipGaji')
+        );
     }
 
     protected function getStats(): array

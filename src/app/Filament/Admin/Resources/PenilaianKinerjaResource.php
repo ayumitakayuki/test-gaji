@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use App\Models\User;
 
 class PenilaianKinerjaResource extends Resource
 {
@@ -218,7 +219,10 @@ class PenilaianKinerjaResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Gate::allows('kinerja.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('view_any_penilaian::kinerja');
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -228,16 +232,25 @@ class PenilaianKinerjaResource extends Resource
 
     public static function canCreate(): bool
     {
-        return Gate::allows('kinerja.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('create_penilaian::kinerja');
     }
 
     public static function canEdit($record): bool
     {
-        return Gate::allows('kinerja.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('update_penilaian::kinerja');
     }
 
     public static function canDelete($record): bool
     {
-        return Gate::allows('kinerja.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('delete_penilaian::kinerja');
     }
 }

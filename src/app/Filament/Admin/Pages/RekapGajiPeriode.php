@@ -19,6 +19,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 
 class RekapGajiPeriode extends Page implements HasForms
 {
@@ -352,9 +353,10 @@ class RekapGajiPeriode extends Page implements HasForms
     }
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_RekapGajiPeriode');
     }
 
     public static function shouldRegisterNavigation(): bool

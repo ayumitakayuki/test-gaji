@@ -29,7 +29,10 @@ class KasbonVerifikasiAkhirDO extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('kasbon.approve');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && $user->can('page_KasbonVerifikasiAkhirDO');
     }
 
     public static function shouldRegisterNavigation(): bool

@@ -17,6 +17,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SlipGajiExport;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class HistoriSlipGaji extends Page implements HasTable
 {
@@ -178,10 +180,13 @@ class HistoriSlipGaji extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return Gate::allows('penggajian.process')
-            || Gate::allows('absensi.validate')
-            || Gate::allows('karyawan.manage')
-            || Gate::allows('penggajian.report');
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        return $user && (
+            $user->can('page_SlipGaji')
+            || $user->can('page_HistoriSlipGaji')
+        );
     }
 
     public static function shouldRegisterNavigation(): bool
