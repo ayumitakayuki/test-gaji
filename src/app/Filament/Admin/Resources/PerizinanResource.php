@@ -19,6 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Hidden;
 use App\Models\User;
 
 class PerizinanResource extends Resource
@@ -29,30 +30,36 @@ class PerizinanResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Select::make('karyawan_id')
-                    ->relationship('karyawan', 'nama')
-                    ->label('Karyawan')
-                    ->disabledOn('create')  // tidak bisa diganti saat pembuatan
-                    ->hiddenOn('create'), 
-                Select::make('jenis')
-                    ->options([
-                        'sakit'        => 'Sakit (dengan surat dokter)',
-                        'berduka'      => 'Berduka',
-                        'tanpa_alasan' => 'Tanpa Alasan',
-                        // jenis lain sesuai kebutuhan
-                    ])
-                    ->label('Jenis Izin')
-                    ->required(),
-                DatePicker::make('tanggal_mulai')->label('Tanggal Mulai')->required(),
-                DatePicker::make('tanggal_selesai')->label('Tanggal Selesai')->required(),
-                Textarea::make('keterangan')->label('Keterangan'),
-                FileUpload::make('bukti_path')
-                    ->label('Upload Surat/Bukti')
-                    ->directory('bukti-perizinan')
-                    ->acceptedFileTypes(['application/pdf','image/*']),
-            ]);
+        return $form->schema([
+            // Conditionally show the karyawan selector:
+            Select::make('karyawan_id')
+                ->relationship('karyawan', 'nama')
+                ->label('Karyawan')
+                ->hidden(fn () => Auth::user()?->role === 'karyawan')
+                ->disabled(fn () => Auth::user()?->role === 'karyawan')
+                ->required(fn () => Auth::user()?->role !== 'karyawan'),
+
+            Hidden::make('karyawan_id')
+                ->default(fn () => Auth::user()?->karyawan_id)
+                ->dehydrated()
+                ->hidden(fn () => Auth::user()?->role !== 'karyawan'),
+
+            Forms\Components\Select::make('jenis')
+                ->options([
+                    'sakit'        => 'Sakit (dengan surat dokter)',
+                    'berduka'      => 'Berduka',
+                    'tanpa_alasan' => 'Tanpa Alasan',
+                ])
+                ->label('Jenis Izin')
+                ->required(),
+            Forms\Components\DatePicker::make('tanggal_mulai')->label('Tanggal Mulai')->required(),
+            Forms\Components\DatePicker::make('tanggal_selesai')->label('Tanggal Selesai')->required(),
+            Forms\Components\Textarea::make('keterangan')->label('Keterangan'),
+            Forms\Components\FileUpload::make('bukti_path')
+                ->label('Upload Surat/Bukti')
+                ->directory('bukti-perizinan')
+                ->acceptedFileTypes(['application/pdf', 'image/*']),
+        ]);
     }
 
     public static function table(Table $table): Table
