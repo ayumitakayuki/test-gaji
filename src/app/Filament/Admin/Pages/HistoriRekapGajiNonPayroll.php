@@ -127,21 +127,21 @@ class HistoriRekapGajiNonPayroll extends Page implements HasTable
                 ]))
                 ->openUrlInNewTab(),
 
-            Tables\Actions\Action::make('recalc')
-                ->label('Recalculate Totals')
-                ->icon('heroicon-o-arrow-path')
-                ->color('gray')
-                ->action(function (RekapNonPayrollHeader $record) {
-                    $agg = $record->rows()->selectRaw("
-                        COUNT(*)                               as rows_count,
-                        COALESCE(SUM(pembulatan),0)            as total_pembulatan,
-                        COALESCE(SUM(kasbon),0)                as total_kasbon,
-                        COALESCE(SUM(sisa_kasbon),0)           as total_sisa_kasbon,
-                        COALESCE(SUM(total_setelah_bon),0)     as total_total_setelah_bon
-                    ")->first();
+            // Tables\Actions\Action::make('recalc')
+            //     ->label('Recalculate Totals')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->color('gray')
+            //     ->action(function (RekapNonPayrollHeader $record) {
+            //         $agg = $record->rows()->selectRaw("
+            //             COUNT(*)                               as rows_count,
+            //             COALESCE(SUM(pembulatan),0)            as total_pembulatan,
+            //             COALESCE(SUM(kasbon),0)                as total_kasbon,
+            //             COALESCE(SUM(sisa_kasbon),0)           as total_sisa_kasbon,
+            //             COALESCE(SUM(total_setelah_bon),0)     as total_total_setelah_bon
+            //         ")->first();
 
-                    $record->update($agg->toArray());
-                }),
+            //         $record->update($agg->toArray());
+            //     }),
 
             Tables\Actions\DeleteAction::make(),
         ];

@@ -142,7 +142,7 @@ class SlipGajiHitung extends Page
             );
 
             // $this->applyRekapToGajiData();
-            // $this->autoAddDefaultDeductions();
+            $this->autoAddDefaultDeductions();
             $this->applyPerizinan();
             $this->computeKasbonAuto();
             $this->calculateGrandTotal();
@@ -871,6 +871,10 @@ class SlipGajiHitung extends Page
     }
     private function autoAddDefaultDeductions(): void
     {
+        if (!$this->gaji_data) {
+            return;
+        }
+
         // hanya kalau periode MENGANDUNG tanggal 1
         if (!$this->rangeIncludesDayOfMonth(1)) {
             $this->removeBpjsAutoItems();
@@ -878,17 +882,22 @@ class SlipGajiHitung extends Page
         }
 
         $nominals = $this->gaji_data['nominals'] ?? [];
+
         $has = fn($k) => isset($nominals[$k]) && (float)$nominals[$k] > 0;
 
-        // selalu bersihkan dulu agar tidak dobel saat edit
+        // selalu bersihkan dulu agar tidak dobel saat edit / hitung ulang
         $this->removeBpjsAutoItems();
 
         if ($has('bpjs_gabungan')) {
-            // push gabungan saja
             $this->pushAdditionalItemIfMissing('bpjs_gabungan');
         } else {
-            if ($has('bpjs_kesehatan')) $this->pushAdditionalItemIfMissing('bpjs_kesehatan');
-            if ($has('bpjs_tk'))        $this->pushAdditionalItemIfMissing('bpjs_tk');
+            if ($has('bpjs_kesehatan')) {
+                $this->pushAdditionalItemIfMissing('bpjs_kesehatan');
+            }
+
+            if ($has('bpjs_tk')) {
+                $this->pushAdditionalItemIfMissing('bpjs_tk');
+            }
         }
 
         $this->calculateGrandTotal();

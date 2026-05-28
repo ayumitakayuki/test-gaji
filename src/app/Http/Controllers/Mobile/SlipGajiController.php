@@ -16,7 +16,7 @@ class SlipGajiController extends Controller
 
         abort_if(!$karyawan, 404);
 
-        $slips = Gaji::query()
+        $slips = Gaji::with('details')
             ->where('id_karyawan', $karyawan->id_karyawan)
             ->orderByDesc('periode_akhir')
             ->get();

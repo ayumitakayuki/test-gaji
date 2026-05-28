@@ -97,12 +97,13 @@ class RekapTransferPermataExport
                 ];
             })->values()->all();
 
+            // FIX: cast ke int agar konsisten dengan SUM() SQL di DB (hindari selisih float)
             $totals = [
-                'pembulatan'  => array_sum(array_column($rows, 'pembulatan')),
-                'kasbon'      => array_sum(array_column($rows, 'kasbon')),
-                'sisa_kasbon' => array_sum(array_column($rows, 'sisa_kasbon')),
-                'gaji_16_31'  => array_sum(array_column($rows, 'gaji_16_31')),
-                'gaji_15_31'  => array_sum(array_column($rows, 'gaji_15_31')),
+                'pembulatan'  => (int) array_sum(array_column($rows, 'pembulatan')),
+                'kasbon'      => (int) array_sum(array_column($rows, 'kasbon')),
+                'sisa_kasbon' => (int) array_sum(array_column($rows, 'sisa_kasbon')),
+                'gaji_16_31'  => (int) array_sum(array_column($rows, 'gaji_16_31')),
+                'gaji_15_31'  => (int) array_sum(array_column($rows, 'gaji_15_31')),
             ];
 
             // render blade per header → gabungkan

@@ -389,8 +389,14 @@
                   <b>ID Karyawan:</b> {{ $slip->id_karyawan }}
                 </div>
                 <div class="pk-row">
-                  <b>Total Diterima:</b>
-                  Rp {{ number_format($slip->grand_total ?? 0, 0, ',', '.') }}
+                  <b>Nominal:</b>
+                  @php
+                      $grandTotal = $slip->details
+                          ->first(fn ($detail) => strtolower($detail->kode) === 'grand')
+                          ?->total ?? 0;
+                  @endphp
+
+                  Rp {{ number_format($grandTotal, 0, ',', '.') }}
                 </div>
               </div>
             </a>

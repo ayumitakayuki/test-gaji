@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Absensi;
 use App\Models\Karyawan;
 use App\Models\AbsensiRekap;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Schema;
 use App\Models\KasbonPayment;
 
 class GajiService
@@ -63,26 +61,7 @@ class GajiService
             throw new \DomainException("Rekap absensi periode $awal s/d $akhir belum tersedia. Simpan rekap dulu.");
         }
 
-
-        // ---------- GUARD: kalau tidak ada rekap & tidak ada absensi, stop ----------
-        if (!$rekap) {
-            $exists = Absensi::query()
-                ->whereDate('tanggal', '>=', $awal)
-                ->whereDate('tanggal', '<=', $akhir)
-                ->when(Schema::hasColumn('absensis','karyawan_id'), fn($q)=>$q->where('karyawan_id',$karyawan->id))
-                ->when(!Schema::hasColumn('absensis','karyawan_id') && Schema::hasColumn('absensis','id_karyawan'),
-                    fn($q)=>$q->where('id_karyawan',$karyawan->id_karyawan),
-                    fn($q)=>$q->where('name',$karyawan->nama))
-                ->exists();
-
-            if (!$exists) {
-                throw new \DomainException('Tidak ada rekap atau absensi pada periode ini.');
-            }
-        }
-        // ---------- /GUARD ----------
-
         // 5) Ekstrak angka rekap (pakai toF agar "6,5" terbaca)
-        $toF = fn($v) => (float) str_replace(',', '.', (string) ($v ?? 0));
 
         $sj          = $toF($rekap->sj          ?? 0);
         $sabtu       = $toF($rekap->sabtu       ?? 0);
@@ -117,7 +96,12 @@ class GajiService
         $lembur_hari_besar_total  = $hari_besar* $faktorHariBesar* $nominal_per_jam_lembur;
 
         $total_lembur = $lembur_senin_jumat_total + $lembur_sabtu_total + $lembur_minggu_total + $lembur_hari_besar_total;
-        $total_upah   = $jumlah_hari * $upah_per_hari;
+
+        // FIX: non-harian-lepas pakai gaji_setengah_bulan (flat), bukan jumlah_hari * upah_per_hari
+        $total_upah = $isHarianLepas
+            ? $jumlah_hari * $upah_per_hari
+            : $gaji_setengah_bulan;
+
         $total_gaji   = $total_upah + $total_lembur;
 
         $kasbonQuery = KasbonPayment::query()

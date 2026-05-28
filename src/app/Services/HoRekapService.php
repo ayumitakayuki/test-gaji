@@ -248,13 +248,13 @@ class HoRekapService
 
             foreach ($rows as $r) {
                 if ($r['keterangan'] === 'TRF Permata') {
-                    $totalPayroll += (int) $r['jumlah'];
+                    $totalPayroll += (int) round($r['jumlah']);
                     $countPayroll += (int) $r['jumlah_karyawan'];
                 } elseif ($r['keterangan'] === 'Gaji Harian') {
-                    $totalNon += (int) $r['jumlah'];
+                    $totalNon += (int) round($r['jumlah']);
                     $countNon += (int) $r['jumlah_karyawan'];
                 } elseif ($r['keterangan'] === 'Grand Total') {
-                    $totalGrand += (int) $r['jumlah'];
+                    $totalGrand += (int) round($r['jumlah']);
                     $countGrand += (int) $r['jumlah_karyawan'];
                 }
             }
@@ -283,7 +283,7 @@ class HoRekapService
                 'proyek'           => $r['proyek'] ?? null,
                 'keterangan'       => $r['keterangan'],
                 'trf'              => $r['trf'],
-                'jumlah'           => (int) $r['jumlah'],
+                'jumlah'           => (int) round($r['jumlah']),
                 'jumlah_karyawan'  => (int) $r['jumlah_karyawan'],
             ], $rows);
 
@@ -341,6 +341,7 @@ class HoRekapService
             $sub   = optional($g->details->where('kode','jml')->first())->total ?? 0;
             $kas   = optional($g->details->where('kode','h')->first())->total ?? 0;
             $grand = optional($g->details->where('kode','grand')->first())->total ?? ($sub - $kas);
+            $grand = round((float) $grand);
 
             $agg[$key] ??= [
                 'lokasi'  => $lok,

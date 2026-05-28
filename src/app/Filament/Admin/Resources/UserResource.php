@@ -87,19 +87,30 @@ class UserResource extends Resource
                 Forms\Components\Section::make('Roles')
                     ->schema([
                         Forms\Components\Select::make('roles')
-                            ->label('Roles')
-                            ->multiple()
-                            ->required()
-                            ->options(fn () => \App\Models\Role::query()
-                                ->pluck('name', 'name')  // ✅ key dan value sama-sama nama
-                                ->toArray()
-                            )
-                            ->dehydrated(false) // ✅ jangan auto sync ke pivot
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if ($record) {
-                                    $component->state($record->roles->pluck('name')->toArray());
-                                }
-                            }),
+                        ->label('Roles')
+                        ->multiple()
+                        ->required()
+                        ->live()
+                        ->options(fn () => \App\Models\Role::query()
+                            ->pluck('name', 'name')
+                            ->toArray()
+                        )
+                        ->afterStateHydrated(function ($component, $state, $record) {
+                            if ($record) {
+                                $component->state($record->roles->pluck('name')->toArray());
+                            }
+                        })
+                        ->afterStateUpdated(function ($state) {
+                            $message = \App\Models\User::getSoDConflictMessage($state ?? []);
+
+                            if ($message) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Role konflik')
+                                    ->body($message)
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     ])
                     ->columns(1),
 

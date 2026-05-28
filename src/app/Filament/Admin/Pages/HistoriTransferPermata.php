@@ -142,14 +142,14 @@ class HistoriTransferPermata extends Page implements HasTable
                 ]))
                 ->openUrlInNewTab(),
 
-            Tables\Actions\Action::make('recalc')
-                ->label('Recalculate Totals')
-                ->icon('heroicon-o-arrow-path')
-                ->color('gray')
-                ->action(function (RekapTransferPermata $record) {
-                    // panggil helper di model agar konsisten
-                    $record->refreshTotals();
-                }),
+            // Tables\Actions\Action::make('recalc')
+            //     ->label('Recalculate Totals')
+            //     ->icon('heroicon-o-arrow-path')
+            //     ->color('gray')
+            //     ->action(function (RekapTransferPermata $record) {
+            //         // panggil helper di model agar konsisten
+            //         $record->refreshTotals();
+            //     }),
 
             Tables\Actions\DeleteAction::make(),
         ];
