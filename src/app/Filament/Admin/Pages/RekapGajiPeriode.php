@@ -163,32 +163,41 @@ class RekapGajiPeriode extends Page implements HasForms
         $start = \Illuminate\Support\Arr::get($state, 'start_date');
         $end   = \Illuminate\Support\Arr::get($state, 'end_date');
 
-        // harus lengkap berpasangan
         if (($start && !$end) || (!$start && $end)) {
             \Filament\Notifications\Notification::make()
                 ->title('Lengkapi periode')
                 ->body('Isi Periode Awal dan Periode Akhir, atau kosongkan keduanya.')
-                ->warning()->send();
+                ->warning()
+                ->send();
+
             return;
         }
 
-        $this->filters['start_date']     = $start;
-        $this->filters['end_date']       = $end;
-        $this->filters['selected_pairs'] = \Illuminate\Support\Arr::get($state, 'selected_pairs', $this->filters['selected_pairs']);
+        $this->filters['start_date'] = $start;
+        $this->filters['end_date'] = $end;
+        $this->filters['selected_pairs'] = \Illuminate\Support\Arr::get(
+            $state,
+            'selected_pairs',
+            $this->filters['selected_pairs']
+        );
 
         $this->loadRows();
-        $this->saveCurrentAsHeader();
 
-        if ($this->filters['start_date'] && $this->filters['end_date']) {
-            if (!empty($this->rows)) {
-                $this->saveCurrentAsHeader();
-            } else {
-                \Filament\Notifications\Notification::make()
-                    ->title('Tidak ada data pada periode ini')
-                    ->body('Rekap tidak disimpan karena tidak ada baris.')
-                    ->warning()->send();
-            }
+        if (!$this->filters['start_date'] || !$this->filters['end_date']) {
+            return;
         }
+
+        if (empty($this->rows)) {
+            \Filament\Notifications\Notification::make()
+                ->title('Tidak ada data pada periode ini')
+                ->body('Rekap tidak disimpan karena tidak ada baris.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->saveCurrentAsHeader();
     }
 
     private function refreshPairOptions(): void

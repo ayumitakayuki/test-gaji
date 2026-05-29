@@ -153,7 +153,7 @@ class RekapGajiNonPayroll extends Page implements HasForms
             $grand = 0;
             foreach ($candidates as $empCode) {
                 if ($empCode !== null && array_key_exists($empCode, $grandByEmp)) {
-                    $grand = (int) $grandByEmp[$empCode];
+                    $grand = (int) round((float) $grandByEmp[$empCode]);
                     break;
                 }
             }
@@ -170,8 +170,8 @@ class RekapGajiNonPayroll extends Page implements HasForms
             $r['sisa_kasbon'] = (int) $stats['sisa_kasbon'];   // sisa per akhir range
 
             // ---- turunan: total setelah bon (basis = pembulatan / total_slip)
-            $basis = (int) ($r['pembulatan'] ?? ($r['total_slip'] ?? 0));
-            $r['total_setelah_bon'] = $basis - (int) $r['kasbon'];
+            $basis = (int) round((float) ($r['pembulatan'] ?? ($r['total_slip'] ?? 0)));
+            $r['total_setelah_bon'] = $basis - (int) round((float) $r['kasbon']);
 
             return $r;
         })->values()->all();
@@ -238,13 +238,12 @@ class RekapGajiNonPayroll extends Page implements HasForms
                     'cd'             => $r['cd']      ?? null,
                     'plus'           => $r['plus']    ?? '+',
 
-                    // uang
-                    'pembulatan'        => (int) ($r['pembulatan']        ?? 0), // dari GRAND total
-                    'kasbon'            => (int) ($r['kasbon']            ?? 0),
-                    'sisa_kasbon'       => (int) ($r['sisa_kasbon']       ?? 0),
-                    'total_setelah_bon' => (int) ($r['total_setelah_bon'] ?? ($r['total_slip'] ?? 0)),
-                    'total_slip'        => (int) ($r['total_slip']        ?? 0),
-                    'subtotal'          => (int) ($r['subtotal']          ?? 0),
+                    'pembulatan'        => (int) round((float) ($r['pembulatan']        ?? 0)),
+                    'kasbon'            => (int) round((float) ($r['kasbon']            ?? 0)),
+                    'sisa_kasbon'       => (int) round((float) ($r['sisa_kasbon']       ?? 0)),
+                    'total_setelah_bon' => (int) round((float) ($r['total_setelah_bon'] ?? ($r['total_slip'] ?? 0))),
+                    'total_slip'        => (int) round((float) ($r['total_slip']        ?? 0)),
+                    'subtotal'          => (int) round((float) ($r['subtotal']          ?? 0)),
 
                     // jejak periode per-row
                     'period_start'   => $start->toDateString(),
@@ -307,11 +306,15 @@ class RekapGajiNonPayroll extends Page implements HasForms
         $query = Gaji::query()
             ->with(['details' => function ($q) {
                 $q->where('kode', 'grand');
-            }]);
+            }])
+            ->whereRaw(
+                "LOWER(REPLACE(REPLACE(tipe_pembayaran, '-', '_'), ' ', '_')) = ?",
+                ['non_payroll']
+            );
 
         if ($startDate && $endDate) {
-            $query->whereDate('periode_awal', '>=', $startDate)
-                ->whereDate('periode_akhir', '<=', $endDate);
+            $query->whereDate('periode_awal', $startDate)
+                ->whereDate('periode_akhir', $endDate);
         }
 
         $slips = $query->get();
@@ -319,9 +322,11 @@ class RekapGajiNonPayroll extends Page implements HasForms
         return $slips
             ->groupBy('id_karyawan')
             ->map(function ($list) {
-                // pilih slip terbaru per karyawan
-                $latest = $list->sortByDesc('periode_akhir')->first();
-                return (int) optional(optional($latest)->details->first())->total ?: 0;
+                $latest = $list->sortByDesc('updated_at')->first();
+
+                return (int) round((float) (
+                    optional(optional($latest)->details->first())->total ?? 0
+                ));
             })
             ->toArray();
     }

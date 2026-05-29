@@ -188,23 +188,32 @@ class RekapTransferPermata extends Page implements HasForms
                 ?: $this->parseMoney($r['gaji_15_31'] ?? null)
                 ?: $this->parseMoney($r['total_gaji'] ?? null));
 
-            // === FIX UTAMA: pembulatan = TOTAL GAJI (gross) ===
-            $r['pembulatan'] = (float) $gross;
+            $gross = (int) round((float) $gross);
 
-            // Kasbon: kalau slip ada, ikut slip; kalau tidak, fallback dari agregasi SQL
-            $kasbon = $fromSlip ? (float) $fromSlip['kasbon'] : (float) ($stats['kasbon'] ?? 0);
+            $kasbon = $fromSlip
+                ? (int) round((float) $fromSlip['kasbon'])
+                : (int) round((float) ($stats['kasbon'] ?? 0));
 
-            // Transfer/net: kalau slip ada pakai grand; kalau tidak: gross - kasbon
-            $transfer = $fromSlip ? (float) $fromSlip['grand'] : max(0.0, $gross - $kasbon);
+            $transfer = $fromSlip
+                ? (int) round((float) $fromSlip['grand'])
+                : max(0, $gross - $kasbon);
 
-            // Tulis balik
+            $r['pembulatan']  = $gross;
             $r['kasbon']      = $kasbon;
-            $r['sisa_kasbon'] = (int) ($stats['sisa_kasbon'] ?? 0);
+            $r['sisa_kasbon'] = (int) round((float) ($stats['sisa_kasbon'] ?? 0));
             $r['transfer']    = $transfer;
-
-            // (opsional) simpan gross eksplisit untuk audit
             $r['total_gaji']  = $gross;
 
+            // supaya kolom periode di PDF ikut sama dengan total transfer
+            $startDay = \Carbon\Carbon::parse($this->start_date)->day;
+
+            if ($startDay <= 15) {
+                $r['gaji_15_31'] = $transfer;
+                $r['gaji_16_31'] = 0;
+            } else {
+                $r['gaji_16_31'] = $transfer;
+                $r['gaji_15_31'] = 0;
+            }
             return $r;
         })->values()->all();
         // ---- Filter Search (client-side) ----
@@ -230,51 +239,58 @@ class RekapTransferPermata extends Page implements HasForms
     }
     private function getSlipTotalsForRange(?string $startDate, ?string $endDate): array
     {
-        if (!$startDate || !$endDate) return [];
+        if (!$startDate || !$endDate) {
+            return [];
+        }
 
         $slips = \App\Models\Gaji::query()
             ->with('details')
-            ->whereDate('periode_awal',  $startDate)
+            ->whereDate('periode_awal', $startDate)
             ->whereDate('periode_akhir', $endDate)
-            // ->where('tipe_pembayaran','payroll') // uncomment kalau wajib payroll
+            ->whereRaw(
+                "LOWER(REPLACE(REPLACE(tipe_pembayaran, '-', '_'), ' ', '_')) = ?",
+                ['payroll']
+            )
             ->get();
 
         $out = [];
-        foreach ($slips as $g) {
-            $get = fn($k) => (float) (optional($g->details->where('kode',$k)->first())->total ?? 0);
 
-            // indeks utama: kode karyawan (id_karyawan)
+        foreach ($slips as $g) {
+            $get = fn ($k) => (int) round((float) (
+                optional($g->details->where('kode', $k)->first())->total ?? 0
+            ));
+
             if ($g->id_karyawan) {
-                $out['kode:'.(string)$g->id_karyawan] = [
-                    'subtotal' => $get('jml'),
-                    'kasbon'   => $get('h'),
-                    'grand'    => $get('grand'),
+                $out['kode:' . (string) $g->id_karyawan] = [
+                    'subtotal'    => $get('jml'),
+                    'kasbon'      => $get('h'),
+                    'grand'       => $get('grand'),
                     'karyawan_id' => $g->karyawan_id,
-                    'nama'        => mb_strtolower(trim((string)$g->nama)),
+                    'nama'        => mb_strtolower(trim((string) $g->nama)),
                 ];
             }
-            // indeks alternatif: PK
+
             if ($g->karyawan_id) {
-                $out['pk:'.$g->karyawan_id] = [
-                    'subtotal' => $get('jml'),
-                    'kasbon'   => $get('h'),
-                    'grand'    => $get('grand'),
+                $out['pk:' . $g->karyawan_id] = [
+                    'subtotal'    => $get('jml'),
+                    'kasbon'      => $get('h'),
+                    'grand'       => $get('grand'),
                     'karyawan_id' => $g->karyawan_id,
-                    'nama'        => mb_strtolower(trim((string)$g->nama)),
+                    'nama'        => mb_strtolower(trim((string) $g->nama)),
                 ];
             }
-            // indeks alternatif: nama (last resort)
-            $nameKey = 'name:'.mb_strtolower(trim((string)$g->nama));
+
             if ($g->nama) {
-                $out[$nameKey] = [
-                    'subtotal' => $get('jml'),
-                    'kasbon'   => $get('h'),
-                    'grand'    => $get('grand'),
+                $out['name:' . mb_strtolower(trim((string) $g->nama))] = [
+                    'subtotal'    => $get('jml'),
+                    'kasbon'      => $get('h'),
+                    'grand'       => $get('grand'),
                     'karyawan_id' => $g->karyawan_id,
-                    'nama'        => mb_strtolower(trim((string)$g->nama)),
+                    'nama'        => mb_strtolower(trim((string) $g->nama)),
                 ];
             }
         }
+
         return $out;
     }
 
@@ -377,13 +393,12 @@ class RekapTransferPermata extends Page implements HasForms
                         'range_type'   => $rangeType,
 
                         // paksa numerik, kalau sumber string "Rp 1.000.000", bersihkan dulu
-                        'pembulatan'  => (float) preg_replace('/[^\d.-]/', '', (string) ($r['pembulatan']  ?? 0)),
-                        'kasbon'      => (float) preg_replace('/[^\d.-]/', '', (string) ($r['kasbon']      ?? 0)),
-                        'sisa_kasbon' => (float) preg_replace('/[^\d.-]/', '', (string) ($r['sisa_kasbon'] ?? 0)),
-                        'gaji_16_31'  => (float) preg_replace('/[^\d.-]/', '', (string) ($r['gaji_16_31']  ?? 0)),
-                        'gaji_15_31'  => (float) preg_replace('/[^\d.-]/', '', (string) ($r['gaji_15_31']  ?? 0)),
-                        'transfer'    => (float) preg_replace('/[^\d.-]/', '', (string) ($r['transfer']    ?? 0)),
-
+                        'pembulatan'  => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['pembulatan']  ?? 0))),
+                        'kasbon'      => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['kasbon']      ?? 0))),
+                        'sisa_kasbon' => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['sisa_kasbon'] ?? 0))),
+                        'gaji_16_31'  => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['gaji_16_31']  ?? 0))),
+                        'gaji_15_31'  => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['gaji_15_31']  ?? 0))),
+                        'transfer'    => (int) round((float) preg_replace('/[^\d.-]/', '', (string) ($r['transfer']    ?? 0))),
                         'created_at'  => $now,
                         'updated_at'  => $now,
                     ];

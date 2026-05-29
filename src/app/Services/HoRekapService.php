@@ -238,53 +238,74 @@ class HoRekapService
     public function storeRekapGajiPeriode(string $start, string $end, ?array $pairs = null, ?int $userId = null): RekapGajiPeriod
     {
         return DB::transaction(function () use ($start, $end, $pairs, $userId) {
-            // hitung dulu
-            $rows = $this->rekapGajiPeriode($start, $end, $pairs);
+            // PENTING:
+            // Pakai sumber yang sama dengan tampilan/PDF Rekap Gaji Periode
+            $rows = $this->rekapPeriodeLaporan($start, $end, $pairs);
 
-            // agregasi total
-            $totalPayroll = 0; $countPayroll = 0;
-            $totalNon     = 0; $countNon     = 0;
-            $totalGrand   = 0; $countGrand   = 0;
+            $totalPayroll = 0;
+            $countPayroll = 0;
+
+            $totalNon = 0;
+            $countNon = 0;
+
+            $totalGrand = 0;
+            $countGrand = 0;
 
             foreach ($rows as $r) {
-                if ($r['keterangan'] === 'TRF Permata') {
-                    $totalPayroll += (int) round($r['jumlah']);
-                    $countPayroll += (int) $r['jumlah_karyawan'];
-                } elseif ($r['keterangan'] === 'Gaji Harian') {
-                    $totalNon += (int) round($r['jumlah']);
-                    $countNon += (int) $r['jumlah_karyawan'];
-                } elseif ($r['keterangan'] === 'Grand Total') {
-                    $totalGrand += (int) round($r['jumlah']);
-                    $countGrand += (int) $r['jumlah_karyawan'];
+                $keterangan = strtolower(trim($r['keterangan'] ?? ''));
+
+                if ($keterangan === 'total payroll') {
+                    $totalPayroll = (int) round((float) ($r['jumlah'] ?? 0));
+                    $countPayroll = (int) ($r['jumlah_karyawan'] ?? 0);
+                }
+
+                if (in_array($keterangan, ['total non payroll', 'total cash', 'gaji harian'], true)) {
+                    $totalNon += (int) round((float) ($r['jumlah'] ?? 0));
+                    $countNon += (int) ($r['jumlah_karyawan'] ?? 0);
+                }
+
+                if ($keterangan === 'grand total') {
+                    $totalGrand = (int) round((float) ($r['jumlah'] ?? 0));
+                    $countGrand = (int) ($r['jumlah_karyawan'] ?? 0);
                 }
             }
 
-            // upsert header per periode
-            $header = RekapGajiPeriod::updateOrCreate(
-                ['start_date' => $start, 'end_date' => $end],
-                [
-                    'selected_pairs'   => $pairs ?: null,
-                    'total_payroll'    => $totalPayroll,
-                    'total_non_payroll'=> $totalNon,
-                    'total_grand'      => $totalGrand,
-                    'count_payroll'    => $countPayroll,
-                    'count_non_payroll'=> $countNon,
-                    'count_grand'      => $countGrand,
-                    'created_by'       => $userId,
-                    'status_do'  => 'draft', // set default
-                    'approved_do_by' => null,
-                    'approved_do_at' => null,
-                ]
-            );
+            $header = RekapGajiPeriod::firstOrNew([
+                'start_date' => $start,
+                'end_date'   => $end,
+            ]);
+
+            $isNew = ! $header->exists;
+
+            $header->fill([
+                'selected_pairs'    => $pairs ?: null,
+                'total_payroll'     => $totalPayroll,
+                'total_non_payroll' => $totalNon,
+                'total_grand'       => $totalGrand,
+                'count_payroll'     => $countPayroll,
+                'count_non_payroll' => $countNon,
+                'count_grand'       => $countGrand,
+            ]);
+
+            // Jangan reset status DO kalau data lama sudah pernah diproses
+            if ($isNew) {
+                $header->created_by = $userId;
+                $header->status_do = 'draft';
+                $header->approved_do_by = null;
+                $header->approved_do_at = null;
+            }
+
+            $header->save();
 
             $header->rows()->delete();
+
             $payload = array_map(fn ($r) => [
-                'lokasi'           => $r['lokasi'] ?? null,
-                'proyek'           => $r['proyek'] ?? null,
-                'keterangan'       => $r['keterangan'],
-                'trf'              => $r['trf'],
-                'jumlah'           => (int) round($r['jumlah']),
-                'jumlah_karyawan'  => (int) $r['jumlah_karyawan'],
+                'lokasi'          => $r['lokasi'] ?? null,
+                'proyek'          => $r['proyek'] ?? null,
+                'keterangan'      => $r['keterangan'] ?? null,
+                'trf'             => $r['trf'] ?? null,
+                'jumlah'          => (int) round((float) ($r['jumlah'] ?? 0)),
+                'jumlah_karyawan' => (int) ($r['jumlah_karyawan'] ?? 0),
             ], $rows);
 
             $header->rows()->createMany($payload);

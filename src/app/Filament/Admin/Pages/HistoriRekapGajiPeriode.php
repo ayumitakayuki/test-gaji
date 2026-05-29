@@ -35,6 +35,18 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
     {
         return RekapGajiPeriod::query()
             ->withCount('rows')
+            ->withSum([
+                'rows as calc_total_payroll' => fn ($q) =>
+                    $q->where('keterangan', 'TOTAL PAYROLL'),
+            ], 'jumlah')
+            ->withSum([
+                'rows as calc_total_non_payroll' => fn ($q) =>
+                    $q->whereIn('keterangan', ['TOTAL CASH', 'TOTAL NON PAYROLL', 'Gaji Harian']),
+            ], 'jumlah')
+            ->withSum([
+                'rows as calc_total_grand' => fn ($q) =>
+                    $q->where('keterangan', 'Grand Total'),
+            ], 'jumlah')
             ->latest('start_date');
     }
     protected function getTableColumns(): array
@@ -51,21 +63,34 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
                 ->label('Baris')
                 ->badge(),
 
-            Tables\Columns\TextColumn::make('total_payroll')
+            Tables\Columns\TextColumn::make('calc_total_payroll')
                 ->label('Total Payroll')
                 ->alignRight()
-                ->getStateUsing(fn ($record) => 'Rp ' . number_format($record->total_payroll ?? 0, 0, ',', '.')),
+                ->getStateUsing(function ($record) {
+                    $total = (int) round((float) ($record->calc_total_payroll ?? $record->total_payroll ?? 0));
 
-            Tables\Columns\TextColumn::make('total_non_payroll')
+                    return 'Rp ' . number_format($total, 0, ',', '.');
+                }),
+
+            Tables\Columns\TextColumn::make('calc_total_non_payroll')
                 ->label('Total Non Payroll')
                 ->alignRight()
-                ->getStateUsing(fn ($record) => 'Rp ' . number_format($record->total_non_payroll ?? 0, 0, ',', '.')),
+                ->getStateUsing(function ($record) {
+                    $total = (int) round((float) ($record->calc_total_non_payroll ?? $record->total_non_payroll ?? 0));
 
-            Tables\Columns\TextColumn::make('total_grand')
+                    return 'Rp ' . number_format($total, 0, ',', '.');
+                }),
+
+            Tables\Columns\TextColumn::make('calc_total_grand')
                 ->label('Grand Total')
                 ->alignRight()
-                ->color('success')->weight('bold')
-                ->getStateUsing(fn ($record) => 'Rp ' . number_format($record->total_grand ?? 0, 0, ',', '.')),
+                ->color('success')
+                ->weight('bold')
+                ->getStateUsing(function ($record) {
+                    $total = (int) round((float) ($record->calc_total_grand ?? $record->total_grand ?? 0));
+
+                    return 'Rp ' . number_format($total, 0, ',', '.');
+                }),
 
             Tables\Columns\TextColumn::make('created_by')
                 ->label('Dibuat oleh')
