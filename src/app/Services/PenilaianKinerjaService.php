@@ -39,29 +39,26 @@ class PenilaianKinerjaService
             }
         }
 
-        $nilaiAkhir = $count > 0 ? round($total / $count, 2) : 0;
+        $nilaiAkhir = $count > 0
+            ? round($total / $count, 2)
+            : 0;
 
         if ($nilaiAkhir >= 90) {
             $predikat = 'A';
-            $nominal = 500000;
         } elseif ($nilaiAkhir >= 80) {
             $predikat = 'B';
-            $nominal = 350000;
         } elseif ($nilaiAkhir >= 70) {
             $predikat = 'C';
-            $nominal = 200000;
         } elseif ($nilaiAkhir >= 60) {
             $predikat = 'D';
-            $nominal = 0;
         } else {
             $predikat = 'E';
-            $nominal = 0;
         }
 
         return [
             'nilai_akhir' => $nilaiAkhir,
             'predikat' => $predikat,
-            'nominal_kenaikan_gaji' => $nominal,
+            'nominal_kenaikan_gaji' => 0,
         ];
     }
 }

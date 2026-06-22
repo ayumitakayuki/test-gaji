@@ -13,6 +13,8 @@ use Filament\Forms;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\Filter;
 
 class HistoriTransferPermata extends Page implements HasTable
 {
@@ -113,20 +115,25 @@ class HistoriTransferPermata extends Page implements HasTable
     protected function getTableFilters(): array
     {
         return [
-            Tables\Filters\Filter::make('periode')
+            Filter::make('periode')
                 ->form([
-                    Forms\Components\DatePicker::make('from')->label('Dari'),
-                    Forms\Components\DatePicker::make('to')->label('Sampai'),
+                    DatePicker::make('tanggal_awal')
+                        ->label('Tanggal Awal'),
+                    DatePicker::make('tanggal_akhir')
+                        ->label('Tanggal Akhir'),
                 ])
-                ->query(function (Builder $q, array $data) {
-                    return $q
-                        ->when($data['from'] ?? null, fn ($qq, $from) =>
-                            $qq->whereDate('period_end', '>=', $from)
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['tanggal_awal'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_awal', '>=', $date),
                         )
-                        ->when($data['to'] ?? null, fn ($qq, $to) =>
-                            $qq->whereDate('period_start', '<=', $to)
+                        ->when(
+                            $data['tanggal_akhir'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_akhir', '<=', $date),
                         );
-                }),
+                })
+                ->label('Periode'),
         ];
     }
 

@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\DatePicker;
 use App\Models\User;
 
 class HistoriRekapGajiPeriode extends Page implements HasTable
@@ -124,16 +125,23 @@ class HistoriRekapGajiPeriode extends Page implements HasTable
         return [
             Filter::make('periode')
                 ->form([
-                    \Filament\Forms\Components\DatePicker::make('start')
-                        ->label('Dari')->native(false)->format('Y-m-d'),
-                    \Filament\Forms\Components\DatePicker::make('end')
-                        ->label('Sampai')->native(false)->format('Y-m-d'),
+                    DatePicker::make('tanggal_awal')
+                        ->label('Tanggal Awal'),
+                    DatePicker::make('tanggal_akhir')
+                        ->label('Tanggal Akhir'),
                 ])
-                ->query(function (Builder $query, array $data) {
+                ->query(function (Builder $query, array $data): Builder {
                     return $query
-                        ->when($data['start'] ?? null, fn ($q, $d) => $q->whereDate('start_date', '>=', $d))
-                        ->when($data['end'] ?? null, fn ($q, $d) => $q->whereDate('end_date', '<=', $d));
-                }),
+                        ->when(
+                            $data['tanggal_awal'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_awal', '>=', $date),
+                        )
+                        ->when(
+                            $data['tanggal_akhir'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_akhir', '<=', $date),
+                        );
+                })
+                ->label('Periode'),
         ];
     }
     protected function getTableActions(): array

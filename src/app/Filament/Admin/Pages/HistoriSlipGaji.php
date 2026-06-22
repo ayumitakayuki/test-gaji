@@ -19,6 +19,8 @@ use App\Exports\SlipGajiExport;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\Filter;
 
 class HistoriSlipGaji extends Page implements HasTable
 {
@@ -39,7 +41,7 @@ class HistoriSlipGaji extends Page implements HasTable
     {
         return Gaji::query()
             ->with(['details', 'karyawan'])
-            ->latest('periode_awal');
+            ->orderByDesc('created_at');
     }
 
     protected function getTableColumns(): array
@@ -115,6 +117,25 @@ class HistoriSlipGaji extends Page implements HasTable
     protected function getTableFilters(): array
     {
         return [
+            Filter::make('periode')
+                ->form([
+                    DatePicker::make('tanggal_awal')
+                        ->label('Tanggal Awal'),
+                    DatePicker::make('tanggal_akhir')
+                        ->label('Tanggal Akhir'),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['tanggal_awal'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_awal', '>=', $date),
+                        )
+                        ->when(
+                            $data['tanggal_akhir'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('periode_akhir', '<=', $date),
+                        );
+                })
+                ->label('Periode'),
             SelectFilter::make('status')
                 ->label('Status')
                 ->options([

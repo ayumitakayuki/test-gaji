@@ -13,6 +13,10 @@ use Filament\Tables\Filters\SelectFilter;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select as FormSelect;
+use Filament\Notifications\Notification;
+use App\Services\SlipGajiBatchService;
 
 class SlipGaji extends Page implements HasTable
 {
@@ -23,6 +27,22 @@ class SlipGaji extends Page implements HasTable
     protected static ?string $title = 'Slip Gaji';
     protected static string $view = 'filament.pages.slip-gaji';
 
+    public ?string $start_date = null;
+    public ?string $end_date = null;
+    public string $tipe_pembayaran = 'payroll';
+
+    public function mount(): void
+    {
+        $today = Carbon::today();
+
+        $this->start_date = $today->day <= 15
+            ? $today->copy()->startOfMonth()->toDateString()
+            : $today->copy()->day(16)->toDateString();
+
+        $this->end_date = $today->toDateString();
+        $this->tipe_pembayaran = 'payroll';
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Penggajian';
@@ -31,13 +51,6 @@ class SlipGaji extends Page implements HasTable
     // FIX 1: Filament v3 menggunakan method table(), bukan getTableQuery/getTableColumns/getTableFilters
     public function table(Table $table): Table
     {
-        // FIX 2: default tanggal — periode setengah bulan berjalan saat ini
-        $today = Carbon::today();
-        $defaultStart = $today->day <= 15
-            ? $today->copy()->startOfMonth()->toDateString()          // 1 s/d hari ini (periode 1–15)
-            : $today->copy()->day(16)->toDateString();                 // 16 s/d hari ini (periode 16–akhir)
-        $defaultEnd = $today->toDateString();
-
         return $table
             ->query(
                 Karyawan::query()
@@ -66,19 +79,86 @@ class SlipGaji extends Page implements HasTable
                 Tables\Columns\TextColumn::make('jenis_proyek')
                     ->label('Proyek'),
 
-                // FIX 3: link "Buat Slip" sekarang membawa start_date dan end_date
                 Tables\Columns\TextColumn::make('aksi')
                     ->label('Aksi')
                     ->html()
                     ->getStateUsing(fn ($record) =>
                         '<a href="' . route('filament.admin.pages.slip-gaji-hitung', [
-                            'karyawan_id' => $record->id_karyawan,
-                            'start_date'  => $defaultStart,
-                            'end_date'    => $defaultEnd,
+                            'karyawan_id'      => $record->id_karyawan,
+                            'start_date'       => $this->start_date,
+                            'end_date'         => $this->end_date,
+                            'tipe_pembayaran'  => $this->tipe_pembayaran,
                         ]) . '" class="text-blue-600 hover:underline">Buat Slip</a>'
                     )
                     ->alignCenter(),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('atur_periode')
+                    ->label('Atur Periode')
+                    ->icon('heroicon-o-calendar-days')
+                    ->form([
+                        DatePicker::make('start_date')
+                            ->label('Periode Awal')
+                            ->required()
+                            ->default($this->start_date),
+
+                        DatePicker::make('end_date')
+                            ->label('Periode Akhir')
+                            ->required()
+                            ->default($this->end_date),
+
+                        FormSelect::make('tipe_pembayaran')
+                            ->label('Tipe Pembayaran')
+                            ->options([
+                                'payroll' => 'Payroll',
+                                'non_payroll' => 'Non Payroll',
+                            ])
+                            ->default($this->tipe_pembayaran)
+                            ->required(),
+                    ])
+                    ->fillForm(fn () => [
+                        'start_date' => $this->start_date,
+                        'end_date' => $this->end_date,
+                        'tipe_pembayaran' => $this->tipe_pembayaran,
+                    ])
+                    ->action(function (array $data) {
+                        $this->start_date = $data['start_date'];
+                        $this->end_date = $data['end_date'];
+                        $this->tipe_pembayaran = $data['tipe_pembayaran'];
+
+                        $this->resetTable();
+
+                        Notification::make()
+                            ->title('Periode berhasil diterapkan')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('generate_semua')
+                    ->label('Generate Semua Slip')
+                    ->icon('heroicon-o-bolt')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Generate semua slip gaji?')
+                    ->modalDescription('Sistem akan membuat slip gaji semua karyawan yang punya rekap pada periode aktif.')
+                    ->action(function () {
+                        $result = app(SlipGajiBatchService::class)
+                            ->generateManyByPeriod(
+                                startDate: $this->start_date,
+                                endDate: $this->end_date,
+                                tipePembayaran: $this->tipe_pembayaran,
+                            );
+
+                        Notification::make()
+                            ->title('Generate slip selesai')
+                            ->body("Berhasil: {$result['success']} dari {$result['total']} karyawan. Gagal: {$result['failed']}.")
+                            ->success()
+                            ->send();
+
+                        $this->resetTable();
+                    }),
+            ])
+
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')

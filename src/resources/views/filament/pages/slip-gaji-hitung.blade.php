@@ -274,7 +274,7 @@
                         {{-- kasbon --}}
                         <tr>
                             <td class="px-6 py-4 text-center">{{ $labels[$rowIndex++] }}</td>
-                            <td class="px-4 py-2">Kasbon (otomatis)</td>
+                            <td class="px-4 py-2">Kasbon</td>
                             <td class="px-4 py-2 text-center">{{ (int)($gaji_data['kasbon_masuk'] ?? 0) }}</td>
                             <td class="px-4 py-2 text-center">-</td>
                             <td class="px-4 py-2 text-right">
@@ -320,7 +320,7 @@
                 <div
                     x-data="{
                         showForm: false,
-                        karyawanNominals: @js($gaji_data['nominals'] ?? []),
+                        karyawanNominals: @js($this->getAvailableAdditionalItemNominals()),
                         perizinanDays: @js($perizinan_days ?? []),
 
                         toFloat(v) {
@@ -406,25 +406,13 @@
                                             class="w-full rounded-md border-gray-300 shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
                                         >
                                             <option value="">Pilih Item...</option>
-
-                                            <optgroup label="Uang Makan">
-                                                <option value="uang_makan_lembur_malam">Uang Makan Lembur Malam</option>
-                                                <option value="uang_makan_lembur_jalan">Uang Makan Lembur Jalan</option>
-                                            </optgroup>
-
-                                            <optgroup label="Potongan">
-                                                <option value="bpjs_kesehatan">Potongan BPJS Kesehatan</option>
-                                                <option value="bpjs_tk">Potongan BPJS TK</option>
-                                                <option value="bpjs_gabungan">Potongan BPJS Kesehatan + TK</option>
-                                            </optgroup>
-
-                                            <optgroup label="Perizinan">
-                                                <option value="perizinan_sakit">Perizinan Sakit (Surat Dokter)</option>
-                                                <option value="perizinan_izin">Perizinan Izin</option>
-                                                <option value="perizinan_cuti">Perizinan Cuti</option>
-                                                <option value="perizinan_berduka">Perizinan Berduka</option>
-                                                <option value="perizinan_tanpa_alasan">Perizinan Tanpa Alasan</option>
-                                            </optgroup>
+                                            @foreach ($this->getAvailableAdditionalItemTypes() as $group => $items)
+                                                <optgroup label="{{ $group }}">
+                                                    @foreach ($items as $value => $label)
+                                                        <option value="{{ $value }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Models\Perizinan;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Absensi;
 
 class SlipGajiHitung extends Page
 {
@@ -87,6 +88,7 @@ class SlipGajiHitung extends Page
 
             $this->applyPerizinan();
             $this->autoAddDefaultDeductions();
+            $this->autoAddUangMakanLemburMalam();
             $this->computeKasbonAuto();
             $this->calculateGrandTotal();
             return;
@@ -143,6 +145,7 @@ class SlipGajiHitung extends Page
 
             // $this->applyRekapToGajiData();
             $this->autoAddDefaultDeductions();
+            $this->autoAddUangMakanLemburMalam();
             $this->applyPerizinan();
             $this->computeKasbonAuto();
             $this->calculateGrandTotal();
@@ -261,6 +264,7 @@ class SlipGajiHitung extends Page
         // reset item manual & hitung ulang total
         $this->additional_items = [];
         $this->autoAddDefaultDeductions();
+        $this->autoAddUangMakanLemburMalam();
         $this->computeKasbonAuto();
         $this->calculateGrandTotal();
 
@@ -282,6 +286,7 @@ class SlipGajiHitung extends Page
         );
 
         $this->autoAddDefaultDeductions();
+        $this->autoAddUangMakanLemburMalam();
         $this->computeKasbonAuto();
         $this->calculateGrandTotal();
     }
@@ -314,6 +319,67 @@ class SlipGajiHitung extends Page
     {
         $this->recalculateTotal();
     }
+
+    private function currentKaryawan(): ?Karyawan
+    {
+        if (!$this->karyawan_id) {
+            return null;
+        }
+
+        return Karyawan::where('id_karyawan', $this->karyawan_id)->first()
+            ?? Karyawan::find($this->karyawan_id);
+    }
+
+    private function getNominalAdditionalItem(string $type): float
+    {
+        $karyawan = $this->currentKaryawan();
+
+        return match ($type) {
+            'uang_makan_lembur_malam' => (float) ($karyawan?->uang_makan_lembur_malam ?? 0),
+            'uang_makan_lembur_jalan' => (float) ($karyawan?->uang_makan_lembur_jalan ?? 0),
+
+            'bpjs_kesehatan' => (float) ($karyawan?->potongan_bpjs_kesehatan ?? 0),
+            'bpjs_tk' => (float) ($karyawan?->potongan_tenaga_kerja ?? 0),
+            'bpjs_gabungan' => (float) ($karyawan?->potongan_bpjs_kesehatan_tk ?? 0),
+
+            default => (float) ($this->gaji_data['nominals'][$type] ?? 0),
+        };
+    }
+
+    public function getAvailableAdditionalItemTypes(): array
+    {
+        $karyawan = $this->currentKaryawan();
+
+        $items = [
+            'Uang Makan' => [],
+            'Potongan' => [],
+            'Perizinan' => [
+                'perizinan_sakit' => 'Perizinan Sakit (Surat Dokter)',
+                'perizinan_izin' => 'Perizinan Izin',
+                'perizinan_cuti' => 'Perizinan Cuti',
+                'perizinan_berduka' => 'Perizinan Berduka',
+                'perizinan_tanpa_alasan' => 'Perizinan Tanpa Alasan',
+            ],
+        ];
+
+        // if ((float) ($karyawan?->uang_makan_lembur_malam ?? 0) > 0) {
+        //     $items['Uang Makan']['uang_makan_lembur_malam'] = 'Uang Makan Lembur Malam';
+        // }
+
+        if ((float) ($karyawan?->uang_makan_lembur_jalan ?? 0) > 0) {
+            $items['Uang Makan']['uang_makan_lembur_jalan'] = 'Uang Makan Lembur Jalan';
+        }
+
+        match ($karyawan?->jenis_bpjs) {
+            'bpjs_kesehatan' => $items['Potongan']['bpjs_kesehatan'] = 'Potongan BPJS Kesehatan',
+            'bpjs_tenaga_kerja' => $items['Potongan']['bpjs_tk'] = 'Potongan BPJS TK',
+            'bpjs_kesehatan_tk' => $items['Potongan']['bpjs_gabungan'] = 'Potongan BPJS Kesehatan + TK',
+            default => null,
+        };
+
+        return array_filter($items, fn ($group) => count($group) > 0);
+    }
+
     public function addItem()
     {
         $this->normalizeNewItemNumbers();
@@ -445,12 +511,13 @@ class SlipGajiHitung extends Page
             $this->newItem['masuk'] = (int) ($this->perizinan_days[$value] ?? 0);
             $this->newItem['nominal_lembur'] = 0.0;
 
-            if (!is_numeric($this->newItem['faktor']) || (float)$this->newItem['faktor'] <= 0) {
+            if (!is_numeric($this->newItem['faktor']) || (float) $this->newItem['faktor'] <= 0) {
                 $this->newItem['faktor'] = 1;
             }
         } else {
-            $this->newItem['masuk'] = $this->newItem['masuk'] ?: 0;
-            $this->newItem['nominal_lembur'] = (float)($this->gaji_data['nominals'][$value] ?? 0);
+            $this->newItem['masuk'] = 1;
+            $this->newItem['faktor'] = 1;
+            $this->newItem['nominal_lembur'] = $this->getNominalAdditionalItem($value);
         }
 
         $this->recalculateTotal();
@@ -599,7 +666,7 @@ class SlipGajiHitung extends Page
             GajiDetail::create([
                 'gaji_id' => $gaji->id,
                 'kode' => 'h',
-                'keterangan' => 'Kasbon (otomatis)',
+                'keterangan' => 'Kasbon',
                 'masuk' => $this->gaji_data['kasbon_masuk'] ?? 0,
                 'faktor' => $this->gaji_data['kasbon_faktor'] ?? 1,
                 'nominal' => $this->gaji_data['kasbon_nominal'] ?? 0,
@@ -851,8 +918,7 @@ class SlipGajiHitung extends Page
 
         if (!isset($itemTypes[$type])) return;
 
-        $nominals = $this->gaji_data['nominals'] ?? [];
-        $nominal  = (float)($nominals[$type] ?? 0);
+        $nominal = $this->getNominalAdditionalItem($type);
 
         if ($nominal <= 0) return; // hanya yang punya harga
 
@@ -869,6 +935,92 @@ class SlipGajiHitung extends Page
             'total'          => $qty * $nominal * $faktor,
         ];
     }
+
+    private function hitungJumlahHariLemburMalam(): int
+    {
+        if (!$this->karyawan_id || !$this->start_date || !$this->end_date) {
+            return 0;
+        }
+
+        $karyawan = $this->currentKaryawan();
+
+        if (!$karyawan) {
+            return 0;
+        }
+
+        return Absensi::query()
+            ->where('name', $karyawan->nama)
+            ->whereBetween('tanggal', [$this->start_date, $this->end_date])
+            ->whereNotNull('pulang_lembur')
+            ->where('pulang_lembur', '!=', '')
+            ->get()
+            ->filter(function ($absensi) {
+                $jamPulang = trim((string) $absensi->pulang_lembur);
+
+                try {
+                    $time = Carbon::parse($jamPulang);
+                } catch (\Throwable $e) {
+                    return false;
+                }
+
+                $menit = ((int) $time->format('H') * 60) + (int) $time->format('i');
+
+                // >= 21:00 dihitung lembur malam.
+                // <= 05:00 juga dihitung, untuk kasus pulang lewat tengah malam.
+                return $menit >= (21 * 60) || $menit <= (5 * 60);
+            })
+            ->unique(fn ($absensi) => Carbon::parse($absensi->tanggal)->toDateString())
+            ->count();
+    }
+
+    private function removeUangMakanLemburMalamAutoItem(): void
+    {
+        $this->additional_items = collect($this->additional_items)
+            ->reject(function ($item) {
+                $kode = strtolower(trim($item['no'] ?? ''));
+                $ket = strtolower(trim($item['keterangan'] ?? ''));
+
+                return $kode === 'i'
+                    || $ket === strtolower('Uang Makan Lembur Malam')
+                    || $ket === strtolower('Uang Makan Lembur Malam');
+            })
+            ->values()
+            ->all();
+    }
+
+    private function autoAddUangMakanLemburMalam(): void
+    {
+        if (!$this->gaji_data) {
+            return;
+        }
+
+        $this->removeUangMakanLemburMalamAutoItem();
+
+        $karyawan = $this->currentKaryawan();
+
+        if (!$karyawan) {
+            return;
+        }
+
+        $jumlahHariLemburMalam = $this->hitungJumlahHariLemburMalam();
+        $nominalUangMakan = (float) ($karyawan->uang_makan_lembur_malam ?? 0);
+
+        if ($jumlahHariLemburMalam <= 0 || $nominalUangMakan <= 0) {
+            return;
+        }
+
+        $this->additional_items[] = [
+            'no' => 'i',
+            'keterangan' => 'Uang Makan Lembur Malam',
+            'masuk' => $jumlahHariLemburMalam,
+            'faktor' => 1,
+            'nominal_lembur' => $nominalUangMakan,
+            'total' => $jumlahHariLemburMalam * $nominalUangMakan,
+        ];
+
+        $this->calculateGrandTotal();
+    }
+
     private function autoAddDefaultDeductions(): void
     {
         if (!$this->gaji_data) {
@@ -881,9 +1033,7 @@ class SlipGajiHitung extends Page
             return;
         }
 
-        $nominals = $this->gaji_data['nominals'] ?? [];
-
-        $has = fn($k) => isset($nominals[$k]) && (float)$nominals[$k] > 0;
+        $has = fn($k) => $this->getNominalAdditionalItem($k) > 0;
 
         // selalu bersihkan dulu agar tidak dobel saat edit / hitung ulang
         $this->removeBpjsAutoItems();
@@ -903,7 +1053,19 @@ class SlipGajiHitung extends Page
         $this->calculateGrandTotal();
     }
 
+    public function getAvailableAdditionalItemNominals(): array
+    {
+        $karyawan = $this->currentKaryawan();
 
+        return [
+            'uang_makan_lembur_malam' => (float) ($karyawan?->uang_makan_lembur_malam ?? 0),
+            'uang_makan_lembur_jalan' => (float) ($karyawan?->uang_makan_lembur_jalan ?? 0),
+
+            'bpjs_kesehatan' => (float) ($karyawan?->potongan_bpjs_kesehatan ?? 0),
+            'bpjs_tk' => (float) ($karyawan?->potongan_tenaga_kerja ?? 0),
+            'bpjs_gabungan' => (float) ($karyawan?->potongan_bpjs_kesehatan_tk ?? 0),
+        ];
+    }
     private function rangeIncludesDayOfMonth(int $day): bool
     {
         if (!$this->start_date || !$this->end_date) return false;

@@ -57,8 +57,17 @@ class PenilaianKinerjaResource extends Resource
             $set('nilai_akhir', $hasil['nilai_akhir']);
             $set('predikat', $hasil['predikat']);
 
-            if (blank($get('nominal_kenaikan_gaji')) || (int) $get('nominal_kenaikan_gaji') === 0) {
-                $set('nominal_kenaikan_gaji', $hasil['nominal_kenaikan_gaji']);
+            $karyawan = Karyawan::find($get('karyawan_id'));
+
+            if ($karyawan) {
+                $set(
+                    'nominal_kenaikan_gaji',
+                    $hasil['nilai_akhir'] >= 85
+                        ? ($karyawan->status === 'harian tetap'
+                            ? 500000
+                            : round(500000 / 25))
+                        : 0
+                );
             }
         };
 
@@ -68,12 +77,25 @@ class PenilaianKinerjaResource extends Resource
                 ->relationship('karyawan', 'nama')
                 ->searchable()
                 ->preload()
-                ->required(),
+                ->required()
+                ->live()
+                ->afterStateUpdated(function ($state, Set $set) {
+                    $karyawan = Karyawan::find($state);
 
-            TextInput::make('periode_kenaikan_gaji')
-                ->label('Periode Kenaikan Gaji')
-                ->required(),
+                    if (! $karyawan) {
+                        return;
+                    }
 
+                    $set('status_karyawan', ucfirst($karyawan->status));
+
+                    // Menunggu hasil penilaian
+                    $set('nominal_kenaikan_gaji', 0);
+                }),
+            TextInput::make('status_karyawan')
+                ->label('Status Karyawan')
+                ->disabled()
+                ->dehydrated(false),
+        
             DatePicker::make('tanggal_penilaian')
                 ->label('Tanggal Penilaian')
                 ->required()
@@ -136,7 +158,8 @@ class PenilaianKinerjaResource extends Resource
                 ->label('Nominal Kenaikan Gaji')
                 ->numeric()
                 ->prefix('Rp')
-                ->default(0),
+                ->disabled()
+                ->dehydrated(),
 
             Textarea::make('catatan')
                 ->label('Catatan')
@@ -148,10 +171,18 @@ class PenilaianKinerjaResource extends Resource
     {
         $hasil = app(PenilaianKinerjaService::class)->hitung($data);
 
+        $karyawan = Karyawan::find($data['karyawan_id']);
+
         $data['nilai_akhir'] = $hasil['nilai_akhir'];
         $data['predikat'] = $hasil['predikat'];
-        $data['nominal_kenaikan_gaji'] = $hasil['nominal_kenaikan_gaji'];
         $data['penilai_user_id'] = Auth::id();
+
+        $data['nominal_kenaikan_gaji'] =
+            $hasil['nilai_akhir'] >= 85
+                ? ($karyawan->status === 'harian tetap'
+                    ? 500000
+                    : round(500000 / 25))
+                : 0;
 
         return $data;
     }
@@ -160,10 +191,18 @@ class PenilaianKinerjaResource extends Resource
     {
         $hasil = app(PenilaianKinerjaService::class)->hitung($data);
 
+        $karyawan = Karyawan::find($data['karyawan_id']);
+
         $data['nilai_akhir'] = $hasil['nilai_akhir'];
         $data['predikat'] = $hasil['predikat'];
-        $data['nominal_kenaikan_gaji'] = $hasil['nominal_kenaikan_gaji'];
         $data['penilai_user_id'] = Auth::id();
+
+        $data['nominal_kenaikan_gaji'] =
+            $hasil['nilai_akhir'] >= 85
+                ? ($karyawan->status === 'harian tetap'
+                    ? 500000
+                    : round(500000 / 25))
+                : 0;
 
         return $data;
     }
@@ -174,11 +213,6 @@ class PenilaianKinerjaResource extends Resource
             ->columns([
                 TextColumn::make('karyawan.nama')
                     ->label('Karyawan')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('periode_kenaikan_gaji')
-                    ->label('Periode')
                     ->searchable()
                     ->sortable(),
 
