@@ -100,6 +100,104 @@
                     <td align="right">Rp {{ number_format($item->nominal ?? 0, 0, ',', '.') }}</td>
                     <td align="right"><strong>Rp {{ number_format($item->total ?? 0, 0, ',', '.') }}</strong></td>
                 </tr>
+                {{-- BPJS KESEHATAN --}}
+                @if($item->keterangan === 'Potongan BPJS Kesehatan')
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                        <i>Tanggungan Perusahaan BPJS Kesehatan</i>
+                    </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right"><i>
+                        Rp {{ number_format($gaji->karyawan->tanggungan_perusahaan_bpjs_kesehatan ?? 0,0,',','.') }}
+                    </i></td>
+                    <td align="center"></td>
+                </tr>
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                    <i>Total Iuran BPJS</i>
+                </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right">
+                        <i>
+                            Rp {{ number_format($gaji->karyawan->total_iuran_bpjs ?? 0,0,',','.') }}
+                        </i>
+                    </td>
+                    <td align="center"></td>
+                </tr>
+
+                @endif
+
+                {{-- BPJS TK --}}
+                @if($item->keterangan === 'Potongan BPJS TK')
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                        <i>Tanggungan Perusahaan BPJS TK</i>
+                    </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right"><i>
+                        Rp {{ number_format($gaji->karyawan->tanggungan_perusahaan_bpjs_tk ?? 0,0,',','.') }}
+                    </i></td>
+                    <td align="center"></td>
+                </tr>
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                        <i>Total Iuran BPJS</i>
+                    </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right">
+                        <i>
+                            Rp {{ number_format($gaji->karyawan->total_iuran_bpjs ?? 0,0,',','.') }}
+                        </i>
+                    </td>
+                    <td align="center"></td>
+                </tr>
+
+                @endif
+
+                {{-- BPJS KESEHATAN + TK --}}
+                @if($item->keterangan === 'Potongan BPJS Kesehatan + TK')
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                        <i>Tanggungan Perusahaan BPJS Kesehatan + TK</i>
+                    </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right"><i>
+                        Rp {{ number_format($gaji->karyawan->tanggungan_perusahaan_bpjs_kesehatan_tk ?? 0,0,',','.') }}
+                    <i></td>
+                    <td align="center"></td>
+                </tr>
+
+                <tr>
+                    <td align="center"></td>
+                    <td style="padding-left:15px;">
+                        <i>Total Iuran BPJS</i>
+                    </td>
+                    <td align="center"></td>
+                    <td align="center"></td>
+                    <td align="right">
+                        <i>
+                            Rp {{ number_format($gaji->karyawan->total_iuran_bpjs ?? 0,0,',','.') }}
+                        </i>
+                    </td>
+                    <td align="center"></td>
+                </tr>
+
+                @endif
             @empty
                 <tr><td colspan="6" align="center">Tidak ada data</td></tr>
             @endforelse

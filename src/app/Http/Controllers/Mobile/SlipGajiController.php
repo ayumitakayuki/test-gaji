@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Gaji;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Karyawan;
 
 class SlipGajiController extends Controller
 {
@@ -31,12 +32,24 @@ class SlipGajiController extends Controller
 
         abort_if(!$karyawan, 404);
 
-        $gaji = Gaji::with('details')->findOrFail($id);
+        $gaji = Gaji::with([
+            'details',
+            'karyawan',
+        ])->findOrFail($id);
 
         abort_unless($gaji->id_karyawan === $karyawan->id_karyawan, 403);
 
         $pdf = Pdf::loadView('exports.slip-gaji-pdf', compact('gaji'));
 
         return $pdf->stream('Slip-Gaji-' . $gaji->nama . '.pdf');
+    }
+
+    public function karyawan()
+    {
+        return $this->belongsTo(
+            Karyawan::class,
+            'id_karyawan',
+            'id_karyawan'
+        );
     }
 }

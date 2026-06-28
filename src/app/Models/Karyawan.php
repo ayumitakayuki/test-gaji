@@ -27,6 +27,10 @@ class Karyawan extends Model
         'potongan_bpjs_kesehatan',
         'potongan_tenaga_kerja',
         'potongan_bpjs_kesehatan_tk',
+        'tanggungan_perusahaan_bpjs_kesehatan',
+        'tanggungan_perusahaan_bpjs_tk',
+        'tanggungan_perusahaan_bpjs_kesehatan_tk',
+        'total_iuran_bpjs',
         'faktor_sj',
         'faktor_sabtu',
         'faktor_minggu',
@@ -62,32 +66,82 @@ class Karyawan extends Model
 
     public static function hitungPotonganBpjs(?string $jenisBpjs): array
     {
-        $bpjsKesehatan = round(self::UMR_BPJS * 0.01, 0);
-        $bpjsTenagaKerja = round(self::UMR_BPJS * 0.03, 0);
+        $umr = self::UMR_BPJS;
+
+        // POTONGAN KARYAWAN
+        $bpjsKesKaryawan = round($umr * 0.01, 0);
+        $bpjsTkKaryawan  = round($umr * 0.03, 0);
+
+        // TANGGUNGAN PERUSAHAAN
+        $bpjsKesPerusahaan = round($umr * 0.04, 0);
+        $bpjsTkPerusahaan  = round($umr * 0.0624, 0);
 
         return match ($jenisBpjs) {
+
             'bpjs_kesehatan' => [
-                'potongan_bpjs_kesehatan' => $bpjsKesehatan,
+
+                'potongan_bpjs_kesehatan' => $bpjsKesKaryawan,
                 'potongan_tenaga_kerja' => 0,
                 'potongan_bpjs_kesehatan_tk' => 0,
+
+                'tanggungan_perusahaan_bpjs_kesehatan' => $bpjsKesPerusahaan,
+                'tanggungan_perusahaan_bpjs_tk' => 0,
+                'tanggungan_perusahaan_bpjs_kesehatan_tk' => 0,
+
+                'total_iuran_bpjs' =>
+                    $bpjsKesKaryawan +
+                    $bpjsKesPerusahaan,
             ],
 
             'bpjs_tenaga_kerja' => [
+
                 'potongan_bpjs_kesehatan' => 0,
-                'potongan_tenaga_kerja' => $bpjsTenagaKerja,
+                'potongan_tenaga_kerja' => $bpjsTkKaryawan,
                 'potongan_bpjs_kesehatan_tk' => 0,
+
+                'tanggungan_perusahaan_bpjs_kesehatan' => 0,
+                'tanggungan_perusahaan_bpjs_tk' => $bpjsTkPerusahaan,
+                'tanggungan_perusahaan_bpjs_kesehatan_tk' => 0,
+
+                'total_iuran_bpjs' =>
+                    $bpjsTkKaryawan +
+                    $bpjsTkPerusahaan,
             ],
 
             'bpjs_kesehatan_tk' => [
+
                 'potongan_bpjs_kesehatan' => 0,
                 'potongan_tenaga_kerja' => 0,
-                'potongan_bpjs_kesehatan_tk' => $bpjsKesehatan + $bpjsTenagaKerja,
+
+                'potongan_bpjs_kesehatan_tk' =>
+                    $bpjsKesKaryawan +
+                    $bpjsTkKaryawan,
+
+                'tanggungan_perusahaan_bpjs_kesehatan' => 0,
+                'tanggungan_perusahaan_bpjs_tk' => 0,
+
+                'tanggungan_perusahaan_bpjs_kesehatan_tk' =>
+                    $bpjsKesPerusahaan +
+                    $bpjsTkPerusahaan,
+
+                'total_iuran_bpjs' =>
+                    $bpjsKesKaryawan +
+                    $bpjsTkKaryawan +
+                    $bpjsKesPerusahaan +
+                    $bpjsTkPerusahaan,
             ],
 
             default => [
+
                 'potongan_bpjs_kesehatan' => 0,
                 'potongan_tenaga_kerja' => 0,
                 'potongan_bpjs_kesehatan_tk' => 0,
+
+                'tanggungan_perusahaan_bpjs_kesehatan' => 0,
+                'tanggungan_perusahaan_bpjs_tk' => 0,
+                'tanggungan_perusahaan_bpjs_kesehatan_tk' => 0,
+
+                'total_iuran_bpjs' => 0,
             ],
         };
     }

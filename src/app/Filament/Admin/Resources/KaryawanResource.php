@@ -224,6 +224,11 @@ class KaryawanResource extends Resource
                 ->dehydrated(true)
                 ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_kesehatan')
                 ->helperText('Otomatis: 1% × UMR.'),
+            TextInput::make('tanggungan_perusahaan_bpjs_kesehatan')
+                ->label('Tanggungan Perusahaan BPJS Kesehatan')
+                ->disabled()
+                ->dehydrated(true)
+                ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_kesehatan'),
 
             TextInput::make('potongan_tenaga_kerja')
                 ->label('Potongan BPJS Tenaga Kerja')
@@ -233,6 +238,11 @@ class KaryawanResource extends Resource
                 ->dehydrated(true)
                 ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_tenaga_kerja')
                 ->helperText('Otomatis: 3% × UMR.'),
+            TextInput::make('tanggungan_perusahaan_bpjs_tk')
+                ->label('Tanggungan Perusahaan BPJS TK')
+                ->disabled()
+                ->dehydrated(true)
+                ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_tenaga_kerja'),
 
             TextInput::make('potongan_bpjs_kesehatan_tk')
                 ->label('Potongan BPJS Kesehatan + TK')
@@ -242,6 +252,16 @@ class KaryawanResource extends Resource
                 ->dehydrated(true)
                 ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_kesehatan_tk')
                 ->helperText('Otomatis: BPJS Kesehatan + BPJS TK.'),
+            TextInput::make('tanggungan_perusahaan_bpjs_kesehatan_tk')
+                ->label('Tanggungan Perusahaan BPJS Kes + TK')
+                ->disabled()
+                ->dehydrated(true)
+                ->visible(fn (Get $get) => $get('jenis_bpjs') === 'bpjs_kesehatan_tk'),
+
+            TextInput::make('total_iuran_bpjs')
+                ->label('Total Iuran BPJS')
+                ->disabled()
+                ->dehydrated(true),
 
             TextInput::make('faktor_sj')
                 ->label('Faktor Senin s/d Jumat')
@@ -342,15 +362,49 @@ class KaryawanResource extends Resource
 
                 TextColumn::make('potongan_bpjs_kesehatan')
                     ->label('Potongan BPJS Kesehatan')
-                    ->formatStateUsing(fn ($state) => number_format($state, 0, ',', '.')),
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),                TextColumn::make('tanggungan_perusahaan_bpjs_kesehatan')
+                    ->label('Tanggungan Perusahaan BPJS Kesehatan')
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),
 
                 TextColumn::make('potongan_tenaga_kerja')
                     ->label('Potongan Tenaga Kerja')
-                    ->formatStateUsing(fn ($state) => number_format($state, 0, ',', '.')),
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),                TextColumn::make('tanggungan_perusahaan_bpjs_tk')
+                    ->label('Tanggungan Perusahaan BPJS TK')
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),
 
                 TextColumn::make('potongan_bpjs_kesehatan_tk')
                     ->label('Potongan BPJS Kesehatan + TK')
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),                TextColumn::make('tanggungan_perusahaan_bpjs_kesehatan_tk')
+                    ->label('Tanggungan Perusahaan BPJS Kesehatan TK')
+                    ->formatStateUsing(
+                        fn ($state) => (float) $state > 0
+                            ? number_format($state, 0, ',', '.')
+                            : ''
+                    ),
+                TextColumn::make('total_iuran_bpjs')
+                    ->label('Total Iuran BPJS')
                     ->formatStateUsing(fn ($state) => number_format($state, 0, ',', '.')),
+
                 TextColumn::make('faktor_sj')->label('Faktor SJ'),
                 TextColumn::make('faktor_sabtu')->label('Faktor Sabtu'),
                 TextColumn::make('faktor_minggu')->label('Faktor Minggu'),

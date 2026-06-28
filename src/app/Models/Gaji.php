@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Karyawan;
 
 class Gaji extends Model
 {
@@ -20,7 +21,11 @@ class Gaji extends Model
 
     public function karyawan()
     {
-        return $this->belongsTo(Karyawan::class, 'id_karyawan', 'id_karyawan');
+        return $this->belongsTo(
+            Karyawan::class,
+            'id_karyawan',
+            'id_karyawan'
+        );
     }
     protected $casts = [
         'periode_awal' => 'datetime',
