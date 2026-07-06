@@ -74,7 +74,7 @@ class Karyawan extends Model
 
         // TANGGUNGAN PERUSAHAAN
         $bpjsKesPerusahaan = round($umr * 0.04, 0);
-        $bpjsTkPerusahaan  = round($umr * 0.0624, 0);
+        $bpjsTkPerusahaan  = round($umr * 0.0610, 0);
 
         return match ($jenisBpjs) {
 
